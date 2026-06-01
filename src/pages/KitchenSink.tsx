@@ -112,9 +112,9 @@ export function KitchenSink() {
         <RouteStatusBadge status="in_progress" />
         <RouteStatusBadge status="completed" />
         <RouteStatusBadge status="cancelled" />
-        <RoleBadge role="super_admin" />
-        <RoleBadge role="tenant_admin" />
+        <RoleBadge role="admin" />
         <RoleBadge role="dispatcher" />
+        <RoleBadge role="driver" />
       </Section>
 
       <Section title="Form controls">

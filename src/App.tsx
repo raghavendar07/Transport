@@ -30,14 +30,13 @@ const ChecklistBuilderPage = lazyPage(() => import('@/features/fleet-clients/pag
 const UsersListPage = lazyPage(() => import('@/features/admin/pages/UsersListPage'), 'UsersListPage')
 const UserFormPage = lazyPage(() => import('@/features/admin/pages/UserFormPage'), 'UserFormPage')
 const SettingsPage = lazyPage(() => import('@/features/admin/pages/SettingsPage'), 'SettingsPage')
-const TenantsListPage = lazyPage(() => import('@/features/admin/pages/TenantsListPage'), 'TenantsListPage')
-const TenantFormPage = lazyPage(() => import('@/features/admin/pages/TenantFormPage'), 'TenantFormPage')
-const TenantDetailPage = lazyPage(() => import('@/features/admin/pages/TenantDetailPage'), 'TenantDetailPage')
 const RoutesOverviewPage = lazyPage(() => import('@/features/routes-planning/pages/RoutesOverviewPage'), 'RoutesOverviewPage')
 const RouteBuilderPage = lazyPage(() => import('@/features/routes-planning/pages/RouteBuilderPage'), 'RouteBuilderPage')
 const DashboardPage = lazyPage(() => import('@/features/monitoring/pages/DashboardPage'), 'DashboardPage')
 const LiveRoutesPage = lazyPage(() => import('@/features/monitoring/pages/LiveRoutesPage'), 'LiveRoutesPage')
 const LiveRouteDetailPage = lazyPage(() => import('@/features/monitoring/pages/LiveRouteDetailPage'), 'LiveRouteDetailPage')
+const AlertsPage = lazyPage(() => import('@/features/monitoring/pages/AlertsPage'), 'AlertsPage')
+const ComplianceDashboardPage = lazyPage(() => import('@/features/compliance/pages/ComplianceDashboardPage'), 'ComplianceDashboardPage')
 const ReportsPage = lazyPage(() => import('@/features/compliance/pages/ReportsPage'), 'ReportsPage')
 const DocumentsListPage = lazyPage(() => import('@/features/compliance/pages/DocumentsListPage'), 'DocumentsListPage')
 const UploadDocumentPage = lazyPage(() => import('@/features/compliance/pages/UploadDocumentPage'), 'UploadDocumentPage')
@@ -102,10 +101,20 @@ export function App() {
                     <Route path="/clients/new" element={<ClientFormPage />} />
                     <Route path="/clients/:id" element={<ClientDetailPage />} />
                     <Route path="/clients/:id/edit" element={<ClientFormPage />} />
-                    <Route path="/checklists" element={<ChecklistBuilderPage />} />
+                  </Route>
+                  {/* Dispatcher: view-only alerts surface */}
+                  <Route element={<RequireRole permission="alerts.view" />}>
+                    <Route path="/alerts" element={<AlertsPage />} />
                   </Route>
                   <Route element={<RequireRole permission="reports.view" />}>
                     <Route path="/reports" element={<ReportsPage />} />
+                  </Route>
+                  {/* Compliance — admin only */}
+                  <Route element={<RequireRole permission="compliance.view" />}>
+                    <Route path="/compliance" element={<ComplianceDashboardPage />} />
+                  </Route>
+                  <Route element={<RequireRole permission="checklists.manage" />}>
+                    <Route path="/checklists" element={<ChecklistBuilderPage />} />
                   </Route>
                   <Route element={<RequireRole permission="documents.manage" />}>
                     <Route path="/documents" element={<DocumentsListPage />} />
@@ -114,12 +123,6 @@ export function App() {
                   </Route>
                   <Route element={<RequireRole permission="audit.view" />}>
                     <Route path="/audit" element={<AuditLogPage />} />
-                  </Route>
-                  <Route element={<RequireRole permission="tenants.manage" />}>
-                    <Route path="/tenants" element={<TenantsListPage />} />
-                    <Route path="/tenants/new" element={<TenantFormPage />} />
-                    <Route path="/tenants/:id" element={<TenantDetailPage />} />
-                    <Route path="/tenants/:id/edit" element={<TenantFormPage />} />
                   </Route>
                   <Route element={<RequireRole permission="users.manage" />}>
                     <Route path="/users" element={<UsersListPage />} />

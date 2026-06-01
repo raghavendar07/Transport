@@ -51,7 +51,7 @@ export const AUDIT_LOG: AuditLogEntry[] = [
     tenantId: 't1',
     actorId: 'u1',
     actorName: 'Alice Admin',
-    actorRole: 'tenant_admin',
+    actorRole: 'admin',
     action: 'route.publish',
     recordType: 'RoutePlan',
     recordId: 'r1',
@@ -59,6 +59,7 @@ export const AUDIT_LOG: AuditLogEntry[] = [
     after: { status: 'published' },
     ip: '203.0.113.20',
     userAgent: 'Mozilla/5.0 (Macintosh)',
+    deviceInfo: 'Chrome 124 · macOS 14 · Desktop',
     createdAt: '2026-05-31T09:01:00Z',
   },
   {
@@ -74,6 +75,7 @@ export const AUDIT_LOG: AuditLogEntry[] = [
     after: { phone: '+44 7700 900222' },
     ip: '203.0.113.45',
     userAgent: 'Mozilla/5.0 (Windows NT 10.0)',
+    deviceInfo: 'Edge 124 · Windows 10 · Desktop',
     createdAt: '2026-05-30T14:22:00Z',
   },
   {
@@ -81,7 +83,7 @@ export const AUDIT_LOG: AuditLogEntry[] = [
     tenantId: 't1',
     actorId: 'u1',
     actorName: 'Alice Admin',
-    actorRole: 'tenant_admin',
+    actorRole: 'admin',
     action: 'user.deactivate',
     recordType: 'User',
     recordId: 'u9',
@@ -89,6 +91,7 @@ export const AUDIT_LOG: AuditLogEntry[] = [
     after: { status: 'inactive' },
     ip: '203.0.113.20',
     userAgent: 'Mozilla/5.0 (Macintosh)',
+    deviceInfo: 'Safari 17 · macOS 14 · Desktop',
     createdAt: '2026-05-29T11:05:00Z',
   },
 ]

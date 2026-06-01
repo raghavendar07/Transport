@@ -87,8 +87,8 @@ export function UserFormPage() {
                   value={role}
                   onValueChange={(v) => setValue('role', v as UserValues['role'])}
                   options={[
-                    { value: 'tenant_admin', label: 'Tenant Admin', description: 'Full access within the company' },
-                    { value: 'dispatcher', label: 'Dispatcher', description: 'Operations only — no user or settings management' },
+                    { value: 'admin', label: 'Admin', description: 'Full access: users, settings, compliance, documents, reports' },
+                    { value: 'dispatcher', label: 'Dispatcher', description: 'Operations only: fleet, routes, live tracking, alerts, reports' },
                   ]}
                 />
               )}

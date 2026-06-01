@@ -1,10 +1,9 @@
-import { Shield, Building2, Route as RouteIcon, Truck } from 'lucide-react'
+import { Shield, Route as RouteIcon, Truck } from 'lucide-react'
 import { Badge, type BadgeTone } from '@/components/ui/Badge'
 import { type Role, ROLE_LABELS } from '@/lib/rbac'
 
 const META: Record<Role, { tone: BadgeTone; icon: typeof Shield }> = {
-  super_admin: { tone: 'info', icon: Shield },
-  tenant_admin: { tone: 'info', icon: Building2 },
+  admin: { tone: 'info', icon: Shield },
   dispatcher: { tone: 'neutral', icon: RouteIcon },
   driver: { tone: 'neutral', icon: Truck },
 }

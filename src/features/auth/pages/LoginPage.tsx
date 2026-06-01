@@ -64,7 +64,7 @@ export function LoginPage() {
         </Button>
       </form>
       <p className="mt-4 text-center text-xs text-text-subtle">
-        Demo: admin@nwt.test / dispatch@nwt.test / super@platform.test · password
+        Demo: admin@nwt.test (Admin) / dispatch@nwt.test (Dispatcher) · password
       </p>
     </AuthLayout>
   )

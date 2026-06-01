@@ -186,6 +186,8 @@ export interface AuditLogEntry {
   after: Record<string, unknown> | null
   ip: string
   userAgent: string
+  /** Human-readable device/browser/OS summary for the audit trail. */
+  deviceInfo: string
   createdAt: string
 }
 

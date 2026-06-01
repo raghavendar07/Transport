@@ -57,10 +57,16 @@ export function ReportsPage() {
     toast.success('Report queued', 'It will appear below when ready.')
   }
 
-  function download(r: GeneratedReport, fmt: 'pdf' | 'csv') {
+  const MIME: Record<'pdf' | 'csv' | 'xlsx', string> = {
+    pdf: 'application/pdf',
+    csv: 'text/csv',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  }
+
+  function download(r: GeneratedReport, fmt: 'pdf' | 'csv' | 'xlsx') {
     // Mock download: emit a small blob so the browser save dialog works.
     const blob = new Blob([`Mock ${fmt.toUpperCase()} — ${TYPE_LABEL[r.type]} ${r.dateFrom}..${r.dateTo}`], {
-      type: fmt === 'pdf' ? 'application/pdf' : 'text/csv',
+      type: MIME[fmt],
     })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -92,6 +98,9 @@ export function ReportsPage() {
             </Button>
             <Button size="sm" variant="ghost" onClick={() => download(r, 'csv')}>
               CSV
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => download(r, 'xlsx')}>
+              Excel
             </Button>
           </div>
         ) : (

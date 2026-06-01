@@ -1,17 +1,17 @@
 import { NavLink } from 'react-router-dom'
-import { NAV_SECTIONS } from '@/lib/nav'
+import { getNavSections } from '@/lib/nav'
 import { useAuth } from '@/lib/auth'
 import { can } from '@/lib/rbac'
 import { cn } from '@/lib/cn'
 
-/** Role-filtered navigation list, shared by the desktop sidebar and mobile drawer. */
+/** Role-specific navigation, shared by the desktop sidebar and mobile drawer. */
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { session } = useAuth()
   const role = session?.role
 
   return (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Primary">
-      {NAV_SECTIONS.map((section, i) => {
+      {getNavSections(role).map((section, i) => {
         const items = section.items.filter((item) => !item.permission || can(role, item.permission))
         if (items.length === 0) return null
         return (

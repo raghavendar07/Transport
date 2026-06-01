@@ -65,7 +65,7 @@ export function UsersListPage() {
               key: 'role',
               label: 'Role',
               options: [
-                { value: 'tenant_admin', label: 'Tenant Admin' },
+                { value: 'admin', label: 'Admin' },
                 { value: 'dispatcher', label: 'Dispatcher' },
               ],
             },

@@ -14,6 +14,10 @@ export interface DashboardSummary {
   completed: number
   inProgress: number
   draft: number
+  published: number
+  cancelled: number
+  /** Completed / (total incl. cancelled) as a 0–100 percentage. */
+  completionPct: number
 }
 
 export type AlertSeverity = 'warn' | 'expired'
@@ -39,16 +43,21 @@ export interface LiveRoute {
 
 export const mockMonitoring = {
   async dashboard(tenantId: string, date: string): Promise<DashboardSummary> {
-    const todays = routesRef.raw(tenantId).filter((r) => r.date === date && r.status !== 'cancelled')
+    const all = routesRef.raw(tenantId).filter((r) => r.date === date)
+    const todays = all.filter((r) => r.status !== 'cancelled')
     const active = todays.filter((r) => r.status === 'published' || r.status === 'in_progress')
+    const completed = todays.filter((r) => r.status === 'completed').length
     return delay({
       date,
       totalRoutes: todays.length,
       driversActive: new Set(active.map((r) => r.driverId)).size,
       vehiclesInUse: new Set(active.map((r) => r.vehicleId)).size,
-      completed: todays.filter((r) => r.status === 'completed').length,
+      completed,
       inProgress: todays.filter((r) => r.status === 'in_progress').length,
       draft: todays.filter((r) => r.status === 'draft').length,
+      published: todays.filter((r) => r.status === 'published').length,
+      cancelled: all.filter((r) => r.status === 'cancelled').length,
+      completionPct: all.length ? Math.round((completed / all.length) * 100) : 0,
     })
   },
 

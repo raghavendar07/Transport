@@ -10,7 +10,6 @@ import type {
   Client,
   SafetyChecklist,
   User,
-  Tenant,
   TenantSettings,
   RoutePlan,
   RouteSession,
@@ -25,7 +24,7 @@ import type {
 } from './types'
 import { mockAuth } from './mock/auth'
 import { mockFleet } from './mock/fleet'
-import { mockUsers, mockTenants, mockSettings } from './mock/admin'
+import { mockUsers, mockSettings } from './mock/admin'
 import { mockRoutes, type OverlapResult } from './mock/routes'
 import {
   mockMonitoring,
@@ -47,15 +46,6 @@ export interface CrudApi<T extends { id: string; tenantId: string }> {
   remove(tenantId: string, id: string): Promise<void>
 }
 
-/** Platform-level tenants API (NOT tenant-scoped — the first arg is ignored). */
-export interface TenantsApi {
-  list(_: string, params?: ListParams): Promise<Paginated<Tenant>>
-  get(_: string, id: string): Promise<Tenant>
-  create(_: string, data: Omit<Tenant, 'id' | 'createdAt'>): Promise<Tenant>
-  update(_: string, id: string, data: Partial<Tenant>): Promise<Tenant>
-  remove(_: string, id: string): Promise<void>
-}
-
 export interface Api {
   auth: {
     login(email: string, password: string): Promise<Session>
@@ -67,7 +57,6 @@ export interface Api {
   clients: CrudApi<Client>
   checklists: CrudApi<SafetyChecklist>
   users: CrudApi<User>
-  tenants: TenantsApi
   settings: {
     get(tenantId: string): Promise<TenantSettings>
     update(tenantId: string, data: Partial<TenantSettings>): Promise<TenantSettings>
@@ -117,7 +106,6 @@ const mockApi: Api = {
   clients: mockFleet.clients,
   checklists: mockFleet.checklists,
   users: mockUsers,
-  tenants: mockTenants,
   settings: mockSettings,
   routes: mockRoutes,
   monitoring: mockMonitoring,
@@ -145,7 +133,6 @@ const realApi: Api = {
   clients: realCrud<Client>(),
   checklists: realCrud<SafetyChecklist>(),
   users: realCrud<User>(),
-  tenants: { list: notImpl, get: notImpl, create: notImpl, update: notImpl, remove: notImpl },
   settings: { get: notImpl, update: notImpl },
   routes: {
     list: notImpl,

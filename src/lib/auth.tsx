@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from 'react'
 import type { Role } from '@/lib/rbac'
 import { api } from '@/lib/api/client'
+import { setApiSession } from '@/lib/api/permissions'
 
 /** The authenticated principal carried through the app. */
 export interface Session {
@@ -39,6 +40,12 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(loadSession)
   const [expired, setExpired] = useState(false)
+
+  // Publish the active session to the API layer so mock endpoints can enforce
+  // role permissions (mirrors the backend auth guard).
+  useEffect(() => {
+    setApiSession(session ? { role: session.role, userId: session.userId, tenantId: session.tenantId } : null)
+  }, [session])
 
   const login = useCallback(async (email: string, password: string) => {
     const next = await api.auth.login(email, password)

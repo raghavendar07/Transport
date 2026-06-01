@@ -113,9 +113,15 @@ export function AuditLogPage() {
                 <p className="text-text">{formatDateTime(entry.createdAt)}</p>
               </div>
             </div>
-            <div>
-              <p className="text-xs text-text-subtle">User agent</p>
-              <p className="text-text">{entry.userAgent}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-text-subtle">Device information</p>
+                <p className="text-text">{entry.deviceInfo}</p>
+              </div>
+              <div>
+                <p className="text-xs text-text-subtle">User agent</p>
+                <p className="text-text">{entry.userAgent}</p>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-md border border-border p-3">

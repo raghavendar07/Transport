@@ -34,22 +34,11 @@ export const TENANTS: Tenant[] = [
  */
 export const USERS: (User & { password: string | null })[] = [
   {
-    id: 'u0',
-    tenantId: 't0', // platform/operator scope
-    name: 'Sam Operator',
-    email: 'super@platform.test',
-    role: 'super_admin',
-    status: 'active',
-    lastLoginAt: '2026-05-29T08:10:00Z',
-    createdAt: '2025-01-01T00:00:00Z',
-    password: 'password',
-  },
-  {
     id: 'u1',
     tenantId: 't1',
     name: 'Alice Admin',
     email: 'admin@nwt.test',
-    role: 'tenant_admin',
+    role: 'admin',
     status: 'active',
     lastLoginAt: '2026-05-30T07:45:00Z',
     createdAt: '2025-01-12T09:30:00Z',
@@ -93,7 +82,7 @@ export const USERS: (User & { password: string | null })[] = [
     tenantId: 't2',
     name: 'Bob Admin',
     email: 'admin@acme.test',
-    role: 'tenant_admin',
+    role: 'admin',
     status: 'active',
     lastLoginAt: '2026-05-28T11:00:00Z',
     createdAt: '2025-03-04T09:30:00Z',
@@ -102,7 +91,6 @@ export const USERS: (User & { password: string | null })[] = [
 ]
 
 export const TENANT_NAME_BY_ID: Record<string, string> = {
-  t0: 'Platform',
   t1: 'Northwind Transport Ltd',
   t2: 'Acme Logistics',
 }

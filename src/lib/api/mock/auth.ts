@@ -1,5 +1,6 @@
 import type { Session } from '@/lib/auth'
 import { ApiError } from '@/lib/api/errors'
+import { canAccessPortal } from '@/lib/rbac'
 import { USERS, TENANT_NAME_BY_ID } from './seed'
 import { delay } from './latency'
 
@@ -56,6 +57,11 @@ export const mockAuth = {
       return delay(Promise.reject(new ApiError('invalid_credentials', 'Incorrect email or password.', {
         attemptsRemaining: MAX_ATTEMPTS - rec.fails,
       })))
+    }
+
+    // API-layer enforcement: drivers are mobile-only and cannot access the portal.
+    if (!canAccessPortal(user.role)) {
+      throw new ApiError('forbidden', 'Drivers must use the mobile app — the web portal is not available to your role.')
     }
 
     rec.fails = 0

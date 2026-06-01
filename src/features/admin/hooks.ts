@@ -1,45 +1,10 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api/client'
 import { createResourceHooks } from '@/lib/useCrud'
 import { useAuth } from '@/lib/auth'
-import type { TenantSettings, Tenant, ListParams } from '@/lib/api/types'
+import type { TenantSettings } from '@/lib/api/types'
 
 export const usersApi = createResourceHooks('users', api.users)
-
-/**
- * Tenants are platform-level (super admin), not tenant-scoped, so they get
- * bespoke hooks rather than the tenant-scoped createResourceHooks.
- */
-export const tenantsApi = {
-  useList(params: ListParams = {}) {
-    return useQuery({
-      queryKey: ['tenants', 'list', params],
-      queryFn: () => api.tenants.list('', params),
-      placeholderData: keepPreviousData,
-    })
-  },
-  useGet(id: string | undefined) {
-    return useQuery({
-      queryKey: ['tenants', 'detail', id],
-      queryFn: () => api.tenants.get('', id!),
-      enabled: !!id,
-    })
-  },
-  useCreate() {
-    const qc = useQueryClient()
-    return useMutation({
-      mutationFn: (data: Omit<Tenant, 'id' | 'createdAt'>) => api.tenants.create('', data),
-      onSuccess: () => qc.invalidateQueries({ queryKey: ['tenants'] }),
-    })
-  },
-  useUpdate() {
-    const qc = useQueryClient()
-    return useMutation({
-      mutationFn: ({ id, data }: { id: string; data: Partial<Tenant> }) => api.tenants.update('', id, data),
-      onSuccess: () => qc.invalidateQueries({ queryKey: ['tenants'] }),
-    })
-  },
-}
 
 export function useSettings() {
   const { session } = useAuth()

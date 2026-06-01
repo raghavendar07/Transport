@@ -12,18 +12,20 @@ import type {
 import { ApiError } from '@/lib/api/errors'
 import { Collection, nextId } from './store'
 import { makeCrud } from './fleet'
+import { assertCan } from '@/lib/api/permissions'
 import { DOCUMENTS, AUDIT_LOG, NOTIFICATIONS, DEFAULT_PREFS } from './seed-compliance'
 import { delay, deepClone } from './latency'
 
-// ---------- Documents ----------
+// ---------- Documents (admin-only mutations) ----------
 const documents = new Collection<ComplianceDocument>(DOCUMENTS, 'doc', ['title', 'type'])
-export const mockDocuments = makeCrud(documents)
+export const mockDocuments = makeCrud(documents, 'documents.manage')
 
 // ---------- Audit (read-only) ----------
 const auditRows: AuditLogEntry[] = deepClone(AUDIT_LOG)
 
 export const mockAudit = {
   async list(tenantId: string, params: ListParams = {}): Promise<Paginated<AuditLogEntry>> {
+    assertCan('audit.view') // admin-only read
     const { page = 1, pageSize = 10, search = '', filters = {} } = params
     let items = auditRows.filter((r) => r.tenantId === tenantId)
     if (search.trim()) {
@@ -39,16 +41,21 @@ export const mockAudit = {
     return delay({ items: deepClone(items.slice(start, start + pageSize)), total, page, pageSize })
   },
   async get(tenantId: string, id: string): Promise<AuditLogEntry> {
+    assertCan('audit.view')
     const row = auditRows.find((r) => r.id === id && r.tenantId === tenantId)
     if (!row) throw new ApiError('not_found', 'Log entry not found')
     return delay(deepClone(row))
   },
   /** CSV export (date range ≤ 90 days enforced in the UI). */
   async exportCsv(tenantId: string): Promise<string> {
+    assertCan('audit.view')
     const rows = auditRows.filter((r) => r.tenantId === tenantId)
-    const header = 'timestamp,actor,role,action,recordType,recordId,ip\n'
+    const header = 'timestamp,actor,role,action,entityType,entityId,ip,userAgent,deviceInfo\n'
+    const esc = (s: string) => `"${String(s).replace(/"/g, '""')}"`
     const body = rows
-      .map((r) => [r.createdAt, r.actorName, r.actorRole, r.action, r.recordType, r.recordId, r.ip].join(','))
+      .map((r) =>
+        [r.createdAt, r.actorName, r.actorRole, r.action, r.recordType, r.recordId, r.ip, esc(r.userAgent), esc(r.deviceInfo)].join(','),
+      )
       .join('\n')
     return delay(header + body)
   },
