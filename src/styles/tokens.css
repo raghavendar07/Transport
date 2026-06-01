@@ -1,0 +1,60 @@
+/**
+ * Design tokens — single source of truth for the whole portal.
+ * Values are space-separated RGB channels so Tailwind's `rgb(var(--x) / <alpha>)`
+ * mapping can apply opacity. Edit here to re-skin everything.
+ *
+ * Contrast budget (WCAG 2.1 AA): body text >= 4.5:1, large text / UI >= 3:1.
+ * Status colours are colour-blind-safe and ALWAYS paired with an icon + text label
+ * in StatusBadge/ExpiryBadge — colour is never the sole signal.
+ */
+:root {
+  /* Brand — primary blue #1B6FC4 */
+  --brand: 27 111 196; /* #1B6FC4 */
+  --brand-fg: 255 255 255; /* text on brand fill */
+  --brand-50: 239 246 252;
+  --brand-100: 214 232 247;
+  --brand-200: 173 209 238;
+  --brand-600: 22 95 169; /* hover */
+  --brand-700: 18 78 139; /* active/pressed */
+
+  /* Text — dark slate #1F2933 + greys (all AA on --canvas/--card) */
+  --text: 31 41 51; /* #1F2933  ~13:1 on white */
+  --text-muted: 82 95 107; /* #525F6B ~6.4:1 */
+  --text-subtle: 106 119 131; /* #6A7783 ~4.7:1 */
+  --text-inverse: 255 255 255;
+
+  /* Surfaces */
+  --canvas: 244 246 248; /* light-grey app canvas */
+  --card: 255 255 255; /* white cards */
+  --surface: 255 255 255;
+  --surface-hover: 244 246 248;
+
+  /* Borders */
+  --border: 224 228 232; /* #E0E4E8 */
+  --border-strong: 200 206 212;
+
+  /* Status — colour-blind-safe (blue/amber/red/teal chosen for distinguishability) */
+  --status-active: 21 128 61; /* green  — active/valid */
+  --status-active-bg: 220 242 228;
+  --status-warn: 180 83 9; /* amber — expiring within 30 days (AA text on warn-bg) */
+  --status-warn-bg: 252 240 214;
+  --status-expired: 185 28 28; /* red — expired */
+  --status-expired-bg: 250 226 226;
+  --status-info: 22 95 169; /* blue — informational */
+  --status-info-bg: 214 232 247;
+  --status-neutral: 82 95 107; /* grey — draft/inactive */
+  --status-neutral-bg: 233 236 239;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+
+  /* Shadow */
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.08);
+  --shadow-pop: 0 8px 24px rgb(16 24 40 / 0.12);
+
+  /* Focus ring */
+  --focus: 27 111 196;
+}

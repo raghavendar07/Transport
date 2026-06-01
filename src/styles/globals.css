@@ -1,0 +1,26 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  body {
+    @apply bg-canvas text-text font-sans antialiased;
+  }
+
+  /* Visible focus for keyboard users everywhere (WCAG 2.4.7). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-focus ring-offset-2 ring-offset-canvas;
+  }
+
+  /* Inputs/selects inherit ring offset against card surfaces. */
+  *::placeholder {
+    @apply text-text-subtle;
+  }
+}

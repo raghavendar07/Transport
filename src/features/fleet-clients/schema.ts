@@ -1,0 +1,51 @@
+import { z } from 'zod'
+
+const phone = z.string().min(6, 'Enter a valid phone number')
+
+export const driverSchema = z.object({
+  name: z.string().min(2, 'Name is required'),
+  email: z.string().email('Enter a valid email'),
+  phone,
+  licenceNumber: z.string().min(4, 'Licence number is required'),
+  licenceExpiry: z.string().min(1, 'Licence expiry is required'),
+  address: z.string().min(3, 'Address is required'),
+  dob: z.string().min(1, 'Date of birth is required'),
+  photoUrl: z.string().nullable().default(null),
+  status: z.enum(['active', 'inactive']).default('active'),
+})
+export type DriverValues = z.infer<typeof driverSchema>
+
+export const vehicleSchema = z.object({
+  registration: z.string().min(2, 'Registration is required'),
+  make: z.string().min(1, 'Make is required'),
+  model: z.string().min(1, 'Model is required'),
+  year: z.coerce.number().int().min(1990, 'Enter a valid year').max(2100),
+  capacity: z.coerce.number().int().min(1, 'Capacity must be at least 1'),
+  fuelType: z.enum(['diesel', 'petrol', 'electric', 'hybrid']),
+  insuranceExpiry: z.string().min(1, 'Insurance expiry is required'),
+  registrationExpiry: z.string().min(1, 'Registration expiry is required'),
+  odometer: z.coerce.number().int().min(0, 'Odometer must be positive'),
+  status: z.enum(['active', 'inactive']).default('active'),
+})
+export type VehicleValues = z.infer<typeof vehicleSchema>
+
+export const clientAddressSchema = z.object({
+  id: z.string().default(''),
+  label: z.string().min(1, 'Label is required'),
+  line1: z.string().min(2, 'Address is required'),
+  city: z.string().min(1, 'City is required'),
+  postcode: z.string().min(2, 'Postcode is required'),
+  lat: z.number().nullable().default(null),
+  lng: z.number().nullable().default(null),
+})
+
+export const clientSchema = z.object({
+  uci: z.string().min(2, 'UCI is required'),
+  name: z.string().min(2, 'Name is required'),
+  contactName: z.string().min(2, 'Contact name is required'),
+  contactPhone: phone,
+  addresses: z.array(clientAddressSchema).min(1, 'Add at least one address'),
+  emergencyContact: z.string().min(2, 'Emergency contact is required'),
+  notes: z.string().default(''),
+})
+export type ClientValues = z.infer<typeof clientSchema>
