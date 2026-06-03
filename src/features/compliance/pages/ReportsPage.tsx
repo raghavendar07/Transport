@@ -1,5 +1,13 @@
-import { useState } from 'react'
-import { FileBarChart, Download, Loader, Clock, CheckCircle2, FileText, Package } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  FileBarChart,
+  Download,
+  Loader,
+  Clock,
+  CheckCircle2,
+  FileText,
+  Package,
+} from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import {
   Button,
@@ -7,7 +15,7 @@ import {
   CardBody,
   CardHeader,
   CardTitle,
-  Select,
+  Combobox,
   Input,
   FormField,
   DataTable,
@@ -18,20 +26,22 @@ import {
 } from '@/components/ui'
 import { formatDate, formatDateTime } from '@/lib/format'
 import type { GeneratedReport, ReportType } from '@/lib/api/types'
+import { driversApi, vehiclesApi, clientsApi } from '@/features/fleet-clients/hooks'
+import { useRoutesList } from '@/features/routes-planning/hooks'
 import { useReports, useGenerateReport } from '../hooks'
 
 const TYPES: { value: ReportType; label: string; desc: string }[] = [
-  { value: 'route_summary', label: 'Route Summary', desc: 'Routes, stops and completion by date' },
-  { value: 'driver', label: 'Driver', desc: 'Per-driver activity and compliance' },
-  { value: 'vehicle', label: 'Vehicle', desc: 'Vehicle usage, mileage and documents' },
-  { value: 'client', label: 'Client / UCI', desc: 'Pickups and drops by client' },
+  { value: 'route_summary', label: 'Route Report', desc: 'Routes, stops and completion by date' },
+  { value: 'driver', label: 'Driver Report', desc: 'Per-driver activity and compliance' },
+  { value: 'vehicle', label: 'Vehicle Report', desc: 'Vehicle usage, mileage and documents' },
+  { value: 'client', label: 'Client Report', desc: 'Pickups and drops by client' },
 ]
 
 const TYPE_LABEL: Record<ReportType, string> = {
-  route_summary: 'Route Summary',
+  route_summary: 'Route',
   driver: 'Driver',
   vehicle: 'Vehicle',
-  client: 'Client / UCI',
+  client: 'Client',
 }
 
 function StatusCell({ status }: { status: GeneratedReport['status'] }) {
@@ -49,12 +59,51 @@ export function ReportsPage() {
   const [type, setType] = useState<ReportType>('route_summary')
   const [from, setFrom] = useState('2026-05-01')
   const [to, setTo] = useState('2026-06-01')
+  const [driverId, setDriverId] = useState('')
+  const [vehicleId, setVehicleId] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [routeId, setRouteId] = useState('')
   const [selected, setSelected] = useState<string[]>([])
   const [preview, setPreview] = useState<GeneratedReport | null>(null)
 
-  async function onGenerate() {
-    await generate.mutateAsync({ type, dateFrom: from, dateTo: to, filters: {} })
-    toast.success('Report queued', 'It will appear below when ready.')
+  const drivers = driversApi.useList({ pageSize: 200 })
+  const vehicles = vehiclesApi.useList({ pageSize: 200 })
+  const clients = clientsApi.useList({ pageSize: 200 })
+  const routes = useRoutesList({ pageSize: 200 })
+
+  const driverOptions = useMemo(
+    () => (drivers.data?.items ?? []).map((d) => ({ value: d.id, label: d.name })),
+    [drivers.data],
+  )
+  const vehicleOptions = useMemo(
+    () => (vehicles.data?.items ?? []).map((v) => ({ value: v.id, label: `${v.registration} · ${v.make} ${v.model}` })),
+    [vehicles.data],
+  )
+  const clientOptions = useMemo(
+    () => (clients.data?.items ?? []).map((c) => ({ value: c.id, label: `${c.uci} · ${c.name}` })),
+    [clients.data],
+  )
+  const routeOptions = useMemo(
+    () => (routes.data?.items ?? []).map((r) => ({ value: r.id, label: `${r.name} (${formatDate(r.date)})` })),
+    [routes.data],
+  )
+
+  function buildFilters(format: string): Record<string, string> {
+    const f: Record<string, string> = { format }
+    if (type === 'driver' && driverId) f.driverId = driverId
+    if (type === 'vehicle' && vehicleId) f.vehicleId = vehicleId
+    if (type === 'client' && clientId) f.clientId = clientId
+    if (type === 'route_summary') {
+      if (routeId) f.routeId = routeId
+      if (driverId) f.driverId = driverId
+      if (vehicleId) f.vehicleId = vehicleId
+    }
+    return f
+  }
+
+  async function onGenerate(format: 'pdf' | 'xlsx' | 'csv') {
+    await generate.mutateAsync({ type, dateFrom: from, dateTo: to, filters: buildFilters(format) })
+    toast.success('Report queued', `${TYPE_LABEL[type]} report (${format.toUpperCase()}) will appear when ready.`)
   }
 
   const MIME: Record<'pdf' | 'csv' | 'xlsx', string> = {
@@ -64,7 +113,6 @@ export function ReportsPage() {
   }
 
   function download(r: GeneratedReport, fmt: 'pdf' | 'csv' | 'xlsx') {
-    // Mock download: emit a small blob so the browser save dialog works.
     const blob = new Blob([`Mock ${fmt.toUpperCase()} — ${TYPE_LABEL[r.type]} ${r.dateFrom}..${r.dateTo}`], {
       type: MIME[fmt],
     })
@@ -96,11 +144,11 @@ export function ReportsPage() {
               <Download className="h-4 w-4" />
               PDF
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => download(r, 'csv')}>
-              CSV
-            </Button>
             <Button size="sm" variant="ghost" onClick={() => download(r, 'xlsx')}>
               Excel
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => download(r, 'csv')}>
+              CSV
             </Button>
           </div>
         ) : (
@@ -140,15 +188,59 @@ export function ReportsPage() {
           <CardBody className="space-y-4">
             <FormField label="Report type" required>
               {(f) => (
-                <Select
+                <Combobox
                   {...f}
                   value={type}
-                  onValueChange={(v) => setType(v as ReportType)}
+                  onValueChange={(v) => setType((v || 'route_summary') as ReportType)}
+                  clearable={false}
                   options={TYPES.map((t) => ({ value: t.value, label: t.label }))}
                 />
               )}
             </FormField>
             <p className="text-xs text-text-subtle">{TYPES.find((t) => t.value === type)?.desc}</p>
+
+            {/* Dynamic filters per report type */}
+            {type === 'driver' && (
+              <FormField label="Driver">
+                {(f) => (
+                  <Combobox {...f} value={driverId} onValueChange={setDriverId} options={driverOptions} placeholder="All drivers" />
+                )}
+              </FormField>
+            )}
+            {type === 'vehicle' && (
+              <FormField label="Vehicle">
+                {(f) => (
+                  <Combobox {...f} value={vehicleId} onValueChange={setVehicleId} options={vehicleOptions} placeholder="All vehicles" />
+                )}
+              </FormField>
+            )}
+            {type === 'client' && (
+              <FormField label="Client">
+                {(f) => (
+                  <Combobox {...f} value={clientId} onValueChange={setClientId} options={clientOptions} placeholder="All clients" />
+                )}
+              </FormField>
+            )}
+            {type === 'route_summary' && (
+              <>
+                <FormField label="Route">
+                  {(f) => (
+                    <Combobox {...f} value={routeId} onValueChange={setRouteId} options={routeOptions} placeholder="All routes" />
+                  )}
+                </FormField>
+                <FormField label="Driver filter">
+                  {(f) => (
+                    <Combobox {...f} value={driverId} onValueChange={setDriverId} options={driverOptions} placeholder="Any driver" />
+                  )}
+                </FormField>
+                <FormField label="Vehicle filter">
+                  {(f) => (
+                    <Combobox {...f} value={vehicleId} onValueChange={setVehicleId} options={vehicleOptions} placeholder="Any vehicle" />
+                  )}
+                </FormField>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <FormField label="From" required>
                 {(f) => <Input type="date" {...f} value={from} onChange={(e) => setFrom(e.target.value)} />}
@@ -157,7 +249,8 @@ export function ReportsPage() {
                 {(f) => <Input type="date" {...f} value={to} onChange={(e) => setTo(e.target.value)} />}
               </FormField>
             </div>
-            <Button className="w-full" onClick={onGenerate} loading={generate.isPending}>
+
+            <Button className="w-full" onClick={() => onGenerate('pdf')} loading={generate.isPending}>
               <FileBarChart className="h-4 w-4" />
               Generate report
             </Button>

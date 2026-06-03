@@ -2,6 +2,14 @@ import { z } from 'zod'
 
 const phone = z.string().min(6, 'Enter a valid phone number')
 
+export const requiredDocumentSchema = z.object({
+  type: z.string(),
+  issueDate: z.string().default(''),
+  expiryDate: z.string().default(''),
+  fileName: z.string().nullable().default(null),
+  fileSize: z.number().nullable().default(null),
+})
+
 export const driverSchema = z.object({
   name: z.string().min(2, 'Name is required'),
   email: z.string().email('Enter a valid email'),
@@ -12,6 +20,7 @@ export const driverSchema = z.object({
   dob: z.string().min(1, 'Date of birth is required'),
   photoUrl: z.string().nullable().default(null),
   status: z.enum(['active', 'inactive']).default('active'),
+  documents: z.array(requiredDocumentSchema).default([]),
 })
 export type DriverValues = z.infer<typeof driverSchema>
 
@@ -26,26 +35,30 @@ export const vehicleSchema = z.object({
   registrationExpiry: z.string().min(1, 'Registration expiry is required'),
   odometer: z.coerce.number().int().min(0, 'Odometer must be positive'),
   status: z.enum(['active', 'inactive']).default('active'),
+  documents: z.array(requiredDocumentSchema).default([]),
 })
 export type VehicleValues = z.infer<typeof vehicleSchema>
 
 export const clientAddressSchema = z.object({
   id: z.string().default(''),
-  label: z.string().min(1, 'Label is required'),
-  line1: z.string().min(2, 'Address is required'),
+  label: z.string().default(''),
+  role: z.enum(['pickup', 'dropoff']),
+  line1: z.string().min(2, 'Address line is required'),
   city: z.string().min(1, 'City is required'),
-  postcode: z.string().min(2, 'Postcode is required'),
+  state: z.string().min(1, 'State is required'),
+  postcode: z.string().min(2, 'Postal code is required'),
   lat: z.number().nullable().default(null),
   lng: z.number().nullable().default(null),
 })
 
 export const clientSchema = z.object({
-  uci: z.string().min(2, 'UCI is required'),
+  // UCI is auto-generated server-side; never collected from the form.
   name: z.string().min(2, 'Name is required'),
   contactName: z.string().min(2, 'Contact name is required'),
   contactPhone: phone,
-  addresses: z.array(clientAddressSchema).min(1, 'Add at least one address'),
+  addresses: z.array(clientAddressSchema).length(2, 'Pickup and drop-off addresses are required'),
   emergencyContact: z.string().min(2, 'Emergency contact is required'),
   notes: z.string().default(''),
+  status: z.enum(['active', 'inactive']).default('active'),
 })
 export type ClientValues = z.infer<typeof clientSchema>

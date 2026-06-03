@@ -42,6 +42,18 @@ export interface TenantSettings {
   reportFooter: string
 }
 
+/**
+ * A required compliance document attached to a driver or vehicle.
+ * `fileName` null until uploaded; status is derived from expiryDate via expiryStatus().
+ */
+export interface RequiredDocument {
+  type: string // e.g. 'Driver License', 'Insurance Certificate'
+  issueDate: string
+  expiryDate: string
+  fileName: string | null
+  fileSize: number | null
+}
+
 export interface Driver {
   id: ID
   tenantId: ID
@@ -54,6 +66,7 @@ export interface Driver {
   address: string
   dob: string
   status: EntityStatus
+  documents: RequiredDocument[]
   createdAt: string
 }
 
@@ -72,14 +85,20 @@ export interface Vehicle {
   registrationExpiry: string
   odometer: number
   status: EntityStatus
+  documents: RequiredDocument[]
   createdAt: string
 }
+
+/** Role distinguishes the pickup vs drop-off address on a client record. */
+export type AddressRole = 'pickup' | 'dropoff'
 
 export interface ClientAddress {
   id: ID
   label: string
+  role: AddressRole
   line1: string
   city: string
+  state: string
   postcode: string
   lat: number | null
   lng: number | null
@@ -88,13 +107,14 @@ export interface ClientAddress {
 export interface Client {
   id: ID
   tenantId: ID
-  uci: string // unique client identifier — searchable
+  uci: string // unique client identifier — auto-generated, read-only
   name: string
   contactName: string
   contactPhone: string
   addresses: ClientAddress[]
   emergencyContact: string
   notes: string
+  status: EntityStatus
   createdAt: string
 }
 
@@ -132,7 +152,10 @@ export interface RouteStop {
 export interface RoutePlan {
   id: ID
   tenantId: ID
+  name: string
   date: string
+  /** HH:mm — route start time. Session derived from this in mock helpers. */
+  startTime: string
   session: RouteSession
   driverId: ID
   vehicleId: ID

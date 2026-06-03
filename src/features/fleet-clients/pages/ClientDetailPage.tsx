@@ -79,9 +79,9 @@ export function ClientDetailPage() {
                       <div className="flex items-start gap-2">
                         <MapPin className="mt-0.5 h-4 w-4 text-text-subtle" aria-hidden />
                         <div>
-                          <p className="text-sm font-medium text-text">{a.label}</p>
+                          <p className="text-sm font-medium text-text">{a.role === 'pickup' ? 'Pickup' : 'Drop-off'}</p>
                           <p className="text-sm text-text-muted">
-                            {a.line1}, {a.city} {a.postcode}
+                            {a.line1}, {a.city}, {a.state} {a.postcode}
                           </p>
                           <p className="mt-0.5 text-xs text-text-subtle">
                             {a.lat != null && a.lng != null

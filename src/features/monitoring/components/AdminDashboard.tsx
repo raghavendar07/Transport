@@ -10,10 +10,6 @@ import {
   FileWarning,
   ClipboardX,
   ScrollText,
-  FileBarChart,
-  UserPlus,
-  Upload,
-  ClipboardCheck,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardBody, Button } from '@/components/ui'
 import { Badge } from '@/components/ui/Badge'
@@ -37,22 +33,6 @@ export function AdminDashboard({ data }: { data?: DashboardSummary }) {
 
   return (
     <div className="space-y-6">
-      {/* Quick actions */}
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={() => navigate('/users/new')}>
-          <UserPlus className="h-4 w-4" /> Add User
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/documents/upload')}>
-          <Upload className="h-4 w-4" /> Upload Document
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/checklists')}>
-          <ClipboardCheck className="h-4 w-4" /> Configure Checklist
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => navigate('/reports')}>
-          <FileBarChart className="h-4 w-4" /> Generate Report
-        </Button>
-      </div>
-
       {/* Business totals */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icon={RouteIcon} label="Total Routes (today)" value={data?.totalRoutes ?? '—'} tone="bg-status-info-bg text-status-info" />

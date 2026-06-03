@@ -16,6 +16,7 @@ import {
 import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
 import { StatusBadge } from '@/components/domain/StatusBadge'
 import { formatDate } from '@/lib/format'
+import { DocumentsSummary } from '../components/DocumentsSummary'
 import { driversApi } from '../hooks'
 
 function InfoRow({ icon: Icon, label, value }: { icon: typeof Mail; label: string; value: string }) {
@@ -95,10 +96,7 @@ export function DriverDetailPage() {
                     </dl>
                   </TabPanel>
                   <TabPanel value="documents">
-                    <EmptyState
-                      title="No documents linked"
-                      description="Compliance documents for this driver appear here (built in P9)."
-                    />
+                    <DocumentsSummary documents={driver.documents} />
                   </TabPanel>
                   <TabPanel value="history">
                     <EmptyState

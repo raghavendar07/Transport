@@ -38,6 +38,10 @@ export function useRouteMutations() {
       mutationFn: (data: Omit<RoutePlan, 'id' | 'tenantId' | 'createdAt'>) => api.routes.create(tenantId, data),
       onSuccess: invalidate,
     }),
+    remove: useMutation({
+      mutationFn: (id: string) => api.routes.remove(tenantId, id),
+      onSuccess: invalidate,
+    }),
     update: useMutation({
       mutationFn: ({ id, data }: { id: string; data: Partial<RoutePlan> }) => api.routes.update(tenantId, id, data),
       onSuccess: invalidate,

@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { Plus, Pencil, Car } from 'lucide-react'
+import { Plus, Car } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import { Button, DataTable, type Column } from '@/components/ui'
-import { FilterBar } from '@/components/domain'
+import { FilterBar, RowActionsMenu } from '@/components/domain'
 import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
 import { StatusBadge } from '@/components/domain/StatusBadge'
 import { useListControls } from '@/lib/useListControls'
@@ -13,6 +13,7 @@ export function VehiclesListPage() {
   const navigate = useNavigate()
   const { search, filters, page, setPage, setFilter, onSearchChange, clear, params } = useListControls()
   const { data, isLoading, isError, refetch } = vehiclesApi.useList(params)
+  const remove = vehiclesApi.useRemove()
 
   const columns: Column<Vehicle>[] = [
     {
@@ -89,9 +90,12 @@ export function VehiclesListPage() {
         onRetry={refetch}
         onRowClick={(v) => navigate(`/vehicles/${v.id}`)}
         rowActions={(v) => (
-          <Button size="icon" variant="ghost" aria-label={`Edit ${v.registration}`} onClick={() => navigate(`/vehicles/${v.id}/edit`)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <RowActionsMenu
+            itemLabel={v.registration}
+            onEdit={() => navigate(`/vehicles/${v.id}/edit`)}
+            onDelete={() => remove.mutateAsync(v.id)}
+            deleteSuccessMessage="Vehicle deleted"
+          />
         )}
         pagination={{ page, pageSize: params.pageSize!, total: data?.total ?? 0, onPageChange: setPage }}
         emptyTitle="No vehicles found"

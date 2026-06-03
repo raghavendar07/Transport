@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -6,16 +7,18 @@ import {
   Button,
   Card,
   CardBody,
-  CardFooter,
   Input,
   FormField,
-  Select,
+  Combobox,
   DatePicker,
   Spinner,
   useToast,
 } from '@/components/ui'
+import type { RequiredDocument } from '@/lib/api/types'
 import { vehicleSchema, type VehicleValues } from '../schema'
 import { vehiclesApi } from '../hooks'
+import { RequiredDocumentsSection } from '../components/RequiredDocumentsSection'
+import { VEHICLE_DOCUMENT_TYPES, mergeDocuments } from '../documents'
 
 export function VehicleFormPage() {
   const { id } = useParams()
@@ -26,6 +29,10 @@ export function VehicleFormPage() {
   const { data: existing, isLoading } = vehiclesApi.useGet(id)
   const create = vehiclesApi.useCreate()
   const update = vehiclesApi.useUpdate()
+
+  const [documents, setDocuments] = useState<RequiredDocument[]>(
+    mergeDocuments(VEHICLE_DOCUMENT_TYPES),
+  )
 
   const {
     register,
@@ -47,16 +54,23 @@ export function VehicleFormPage() {
           registrationExpiry: existing.registrationExpiry,
           odometer: existing.odometer,
           status: existing.status,
+          documents: existing.documents,
         }
       : undefined,
   })
 
+  // Prefill the documents section once the existing vehicle loads.
+  useEffect(() => {
+    if (existing) setDocuments(mergeDocuments(VEHICLE_DOCUMENT_TYPES, existing.documents))
+  }, [existing])
+
   async function onSubmit(values: VehicleValues) {
+    const data = { ...values, documents }
     if (isEdit) {
-      await update.mutateAsync({ id: id!, data: values })
+      await update.mutateAsync({ id: id!, data })
       toast.success('Vehicle updated')
     } else {
-      await create.mutateAsync(values)
+      await create.mutateAsync(data)
       toast.success('Vehicle added')
     }
     navigate('/vehicles')
@@ -79,7 +93,7 @@ export function VehicleFormPage() {
         title={isEdit ? 'Edit vehicle' : 'Add vehicle'}
         breadcrumbs={[{ label: 'Vehicles', to: '/vehicles' }, { label: isEdit ? 'Edit' : 'Add' }]}
       />
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
         <Card>
           <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField label="Registration" required error={errors.registration?.message}>
@@ -87,10 +101,11 @@ export function VehicleFormPage() {
             </FormField>
             <FormField label="Fuel type" required error={errors.fuelType?.message}>
               {(f) => (
-                <Select
+                <Combobox
                   {...f}
                   value={fuelType}
-                  onValueChange={(v) => setValue('fuelType', v as VehicleValues['fuelType'])}
+                  onValueChange={(v) => setValue('fuelType', (v || 'diesel') as VehicleValues['fuelType'])}
+                  clearable={false}
                   options={[
                     { value: 'diesel', label: 'Diesel' },
                     { value: 'petrol', label: 'Petrol' },
@@ -123,10 +138,11 @@ export function VehicleFormPage() {
             </FormField>
             <FormField label="Status" error={errors.status?.message}>
               {(f) => (
-                <Select
+                <Combobox
                   {...f}
                   value={status}
-                  onValueChange={(v) => setValue('status', v as VehicleValues['status'])}
+                  onValueChange={(v) => setValue('status', (v || 'active') as VehicleValues['status'])}
+                  clearable={false}
                   options={[
                     { value: 'active', label: 'Active' },
                     { value: 'inactive', label: 'Inactive' },
@@ -135,14 +151,17 @@ export function VehicleFormPage() {
               )}
             </FormField>
           </CardBody>
-          <CardFooter>
-            <Button type="button" variant="secondary" onClick={() => navigate('/vehicles')}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={isSubmitting}>
-              {isEdit ? 'Save changes' : 'Add vehicle'}
-            </Button>
-          </CardFooter>
+        </Card>
+
+        <RequiredDocumentsSection documents={documents} onChange={setDocuments} />
+
+        <Card className="flex items-center justify-end gap-2 px-5 py-4">
+          <Button type="button" variant="secondary" onClick={() => navigate('/vehicles')}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={isSubmitting}>
+            {isEdit ? 'Save changes' : 'Add vehicle'}
+          </Button>
         </Card>
       </form>
     </div>

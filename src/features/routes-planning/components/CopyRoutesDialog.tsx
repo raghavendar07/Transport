@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button, Input, FormField, Select, Checkbox, useToast } from '@/components/ui'
+import { Button, Input, FormField, Combobox, Checkbox, useToast } from '@/components/ui'
 import { useRouteMutations } from '../hooks'
 import { useFleetOptions } from '../useFleetOptions'
 
@@ -64,10 +64,10 @@ export function CopyRoutesDialog({ open, onOpenChange, defaultFrom }: Props) {
         {reassign && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <FormField label="New driver">
-              {(f) => <Select {...f} value={driverId} onValueChange={setDriverId} options={driverOptions} placeholder="Keep original" />}
+              {(f) => <Combobox {...f} value={driverId} onValueChange={setDriverId} options={driverOptions} placeholder="Keep original" />}
             </FormField>
             <FormField label="New vehicle">
-              {(f) => <Select {...f} value={vehicleId} onValueChange={setVehicleId} options={vehicleOptions} placeholder="Keep original" />}
+              {(f) => <Combobox {...f} value={vehicleId} onValueChange={setVehicleId} options={vehicleOptions} placeholder="Keep original" />}
             </FormField>
           </div>
         )}

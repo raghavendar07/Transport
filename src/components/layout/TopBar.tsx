@@ -23,14 +23,6 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       >
         <Menu className="h-5 w-5" aria-hidden />
       </button>
-      {/* Tenant logo placeholder + name */}
-      <div className="flex items-center gap-2">
-        <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-brand-100 text-xs font-bold text-brand-700">
-          {session?.tenantName?.[0] ?? 'T'}
-        </div>
-        <span className="hidden text-sm font-medium text-text sm:block">{session?.tenantName}</span>
-      </div>
-
       <div className="mx-auto w-full max-w-md">
         <SearchInput
           value={search}

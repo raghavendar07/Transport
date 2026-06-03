@@ -1,7 +1,7 @@
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Plus, Trash2 } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import {
   Button,
@@ -9,17 +9,34 @@ import {
   CardBody,
   CardHeader,
   CardTitle,
-  CardFooter,
   Input,
   Textarea,
   FormField,
+  Combobox,
   Spinner,
   useToast,
 } from '@/components/ui'
+import type { AddressRole } from '@/lib/api/types'
 import { clientSchema, type ClientValues } from '../schema'
 import { clientsApi } from '../hooks'
 
-const EMPTY_ADDRESS = { id: '', label: '', line1: '', city: '', postcode: '', lat: null, lng: null }
+const EMPTY: ClientValues = {
+  name: '',
+  contactName: '',
+  contactPhone: '',
+  emergencyContact: '',
+  notes: '',
+  status: 'active',
+  addresses: [
+    { id: '', label: 'Pickup', role: 'pickup', line1: '', city: '', state: '', postcode: '', lat: null, lng: null },
+    { id: '', label: 'Drop-off', role: 'dropoff', line1: '', city: '', state: '', postcode: '', lat: null, lng: null },
+  ],
+}
+
+const ADDRESS_BLOCKS: { role: AddressRole; title: string }[] = [
+  { role: 'pickup', title: 'Pickup Address' },
+  { role: 'dropoff', title: 'Drop-off Address' },
+]
 
 export function ClientFormPage() {
   const { id } = useParams()
@@ -34,31 +51,47 @@ export function ClientFormPage() {
   const {
     register,
     handleSubmit,
-    control,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<ClientValues>({
     resolver: zodResolver(clientSchema),
     values: existing
       ? {
-          uci: existing.uci,
           name: existing.name,
           contactName: existing.contactName,
           contactPhone: existing.contactPhone,
-          addresses: existing.addresses,
           emergencyContact: existing.emergencyContact,
           notes: existing.notes,
+          status: existing.status,
+          // Normalise to exactly [pickup, dropoff] in that order.
+          addresses: ADDRESS_BLOCKS.map(
+            (b) =>
+              existing.addresses.find((a) => a.role === b.role) ?? {
+                id: '',
+                label: b.title.replace(' Address', ''),
+                role: b.role,
+                line1: '',
+                city: '',
+                state: '',
+                postcode: '',
+                lat: null,
+                lng: null,
+              },
+          ),
         }
-      : { uci: '', name: '', contactName: '', contactPhone: '', addresses: [EMPTY_ADDRESS], emergencyContact: '', notes: '' },
+      : EMPTY,
   })
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'addresses' })
+  const status = watch('status')
 
   async function onSubmit(values: ClientValues) {
     if (isEdit) {
       await update.mutateAsync({ id: id!, data: values })
       toast.success('Client updated')
     } else {
-      await create.mutateAsync(values)
+      // uci is ignored by the API and assigned server-side; pass a placeholder.
+      await create.mutateAsync({ ...values, uci: '' })
       toast.success('Client added')
     }
     navigate('/clients')
@@ -84,10 +117,32 @@ export function ClientFormPage() {
             <CardTitle>Client details</CardTitle>
           </CardHeader>
           <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="UCI" required error={errors.uci?.message} hint="Unique client identifier">
-              {(f) => <Input {...f} {...register('uci')} />}
+            <FormField label="UCI" hint="Auto-generated and unique — assigned on save.">
+              {(f) => (
+                <Input
+                  {...f}
+                  value={existing?.uci ?? 'Assigned automatically'}
+                  readOnly
+                  disabled
+                  className="font-mono"
+                />
+              )}
             </FormField>
-            <FormField label="Name" required error={errors.name?.message}>
+            <FormField label="Status">
+              {(f) => (
+                <Combobox
+                  {...f}
+                  value={status}
+                  onValueChange={(v) => setValue('status', (v || 'active') as ClientValues['status'])}
+                  clearable={false}
+                  options={[
+                    { value: 'active', label: 'Active' },
+                    { value: 'inactive', label: 'Inactive' },
+                  ]}
+                />
+              )}
+            </FormField>
+            <FormField label="Client name" required error={errors.name?.message}>
               {(f) => <Input {...f} {...register('name')} />}
             </FormField>
             <FormField label="Contact name" required error={errors.contactName?.message}>
@@ -96,7 +151,7 @@ export function ClientFormPage() {
             <FormField label="Contact phone" required error={errors.contactPhone?.message}>
               {(f) => <Input {...f} {...register('contactPhone')} />}
             </FormField>
-            <FormField label="Emergency contact" required error={errors.emergencyContact?.message} className="sm:col-span-2">
+            <FormField label="Emergency contact" required error={errors.emergencyContact?.message}>
               {(f) => <Input {...f} {...register('emergencyContact')} />}
             </FormField>
             <FormField label="Notes" error={errors.notes?.message} className="sm:col-span-2">
@@ -105,59 +160,59 @@ export function ClientFormPage() {
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <CardTitle>Addresses</CardTitle>
-            <Button type="button" size="sm" variant="secondary" onClick={() => append(EMPTY_ADDRESS)}>
-              <Plus className="h-4 w-4" />
-              Add address
-            </Button>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            {errors.addresses?.root && (
-              <p className="text-sm text-status-expired">{errors.addresses.root.message}</p>
-            )}
-            {fields.map((field, i) => (
-              <div key={field.id} className="rounded-md border border-border p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="text-sm font-medium text-text">Address {i + 1}</span>
-                  {fields.length > 1 && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Remove address ${i + 1}`}
-                      onClick={() => remove(i)}
-                    >
-                      <Trash2 className="h-4 w-4 text-status-expired" />
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <FormField label="Label" required error={errors.addresses?.[i]?.label?.message}>
-                    {(f) => <Input {...f} {...register(`addresses.${i}.label`)} />}
-                  </FormField>
-                  <FormField label="Address line" required error={errors.addresses?.[i]?.line1?.message}>
-                    {(f) => <Input {...f} {...register(`addresses.${i}.line1`)} />}
-                  </FormField>
-                  <FormField label="City" required error={errors.addresses?.[i]?.city?.message}>
-                    {(f) => <Input {...f} {...register(`addresses.${i}.city`)} />}
-                  </FormField>
-                  <FormField label="Postcode" required error={errors.addresses?.[i]?.postcode?.message}>
-                    {(f) => <Input {...f} {...register(`addresses.${i}.postcode`)} />}
-                  </FormField>
-                </div>
-              </div>
-            ))}
-          </CardBody>
-          <CardFooter>
-            <Button type="button" variant="secondary" onClick={() => navigate('/clients')}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={isSubmitting}>
-              {isEdit ? 'Save changes' : 'Add client'}
-            </Button>
-          </CardFooter>
+        {ADDRESS_BLOCKS.map((block, i) => (
+          <Card key={block.role}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-text-subtle" aria-hidden />
+                {block.title}
+              </CardTitle>
+            </CardHeader>
+            <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <input type="hidden" {...register(`addresses.${i}.role`)} />
+              <input type="hidden" {...register(`addresses.${i}.label`)} />
+              <FormField label="Address line" required error={errors.addresses?.[i]?.line1?.message} className="sm:col-span-2">
+                {(f) => <Input {...f} {...register(`addresses.${i}.line1`)} />}
+              </FormField>
+              <FormField label="City" required error={errors.addresses?.[i]?.city?.message}>
+                {(f) => <Input {...f} {...register(`addresses.${i}.city`)} />}
+              </FormField>
+              <FormField label="State" required error={errors.addresses?.[i]?.state?.message}>
+                {(f) => <Input {...f} {...register(`addresses.${i}.state`)} />}
+              </FormField>
+              <FormField label="Postal code" required error={errors.addresses?.[i]?.postcode?.message}>
+                {(f) => <Input {...f} {...register(`addresses.${i}.postcode`)} />}
+              </FormField>
+              <FormField label="Map location (lat, lng)" hint="Optional — leave blank to geocode from address">
+                {(f) => (
+                  <div className="flex gap-2">
+                    <Input
+                      {...f}
+                      type="number"
+                      step="any"
+                      placeholder="Lat"
+                      {...register(`addresses.${i}.lat`, { setValueAs: (v) => (v === '' ? null : Number(v)) })}
+                    />
+                    <Input
+                      type="number"
+                      step="any"
+                      placeholder="Lng"
+                      {...register(`addresses.${i}.lng`, { setValueAs: (v) => (v === '' ? null : Number(v)) })}
+                    />
+                  </div>
+                )}
+              </FormField>
+            </CardBody>
+          </Card>
+        ))}
+
+        <Card className="flex items-center justify-end gap-2 px-5 py-4">
+          <Button type="button" variant="secondary" onClick={() => navigate('/clients')}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={isSubmitting}>
+            {isEdit ? 'Save changes' : 'Add client'}
+          </Button>
         </Card>
       </form>
     </div>

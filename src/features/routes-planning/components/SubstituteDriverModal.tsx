@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Button, FormField, Select, Textarea, RadioGroup, useToast } from '@/components/ui'
+import { Button, FormField, Combobox, Textarea, RadioGroup, useToast } from '@/components/ui'
 import { useRouteMutations } from '../hooks'
 
 interface Props {
@@ -49,7 +49,7 @@ export function SubstituteDriverModal({ open, onOpenChange, routeId, currentDriv
     >
       <div className="space-y-4">
         <FormField label="New driver" required>
-          {(f) => <Select {...f} value={driverId} onValueChange={setDriverId} options={options} placeholder="Select driver" />}
+          {(f) => <Combobox {...f} value={driverId} onValueChange={setDriverId} options={options} placeholder="Select driver" />}
         </FormField>
         {inProgress && (
           <FormField label="Apply to" required>

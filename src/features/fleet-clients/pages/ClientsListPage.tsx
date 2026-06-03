@@ -1,27 +1,60 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Pencil, Contact } from 'lucide-react'
+import { Plus, Contact } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import { Button, DataTable, type Column } from '@/components/ui'
-import { SearchInput } from '@/components/domain'
+import { SearchInput, RowActionsMenu } from '@/components/domain'
+import { StatusBadge } from '@/components/domain/StatusBadge'
 import { useListControls } from '@/lib/useListControls'
-import type { Client } from '@/lib/api/types'
+import { useRoutesList } from '@/features/routes-planning/hooks'
+import type { Client, ClientAddress, AddressRole } from '@/lib/api/types'
 import { clientsApi } from '../hooks'
+
+const ACTIVE_ROUTE_STATUSES = new Set(['draft', 'published', 'in_progress'])
+
+function addressLine(addr: ClientAddress | undefined) {
+  if (!addr) return <span className="text-text-subtle">—</span>
+  return (
+    <span className="text-text-muted">
+      {addr.line1}, {addr.city} {addr.postcode}
+    </span>
+  )
+}
 
 export function ClientsListPage() {
   const navigate = useNavigate()
   const { search, page, setPage, onSearchChange, params } = useListControls()
   const { data, isLoading, isError, refetch } = clientsApi.useList(params)
+  const remove = clientsApi.useRemove()
+  const routesQuery = useRoutesList({ pageSize: 200 })
+
+  // Count active routes that reference each client via a stop.
+  const activeRoutesByClient = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const r of routesQuery.data?.items ?? []) {
+      if (!ACTIVE_ROUTE_STATUSES.has(r.status)) continue
+      const clientIds = new Set(r.stops.map((s) => s.clientId))
+      for (const cid of clientIds) counts[cid] = (counts[cid] ?? 0) + 1
+    }
+    return counts
+  }, [routesQuery.data])
+
+  const addr = (c: Client, role: AddressRole) => c.addresses.find((a) => a.role === role)
 
   const columns: Column<Client>[] = [
     { key: 'uci', header: 'UCI', cell: (c) => <span className="font-mono font-medium">{c.uci}</span>, sortValue: (c) => c.uci },
-    { key: 'name', header: 'Name', cell: (c) => c.name, sortValue: (c) => c.name },
-    { key: 'contact', header: 'Contact', cell: (c) => (
-      <div className="text-text-muted">
-        <div>{c.contactName}</div>
-        <div className="text-xs">{c.contactPhone}</div>
-      </div>
-    ) },
-    { key: 'addresses', header: 'Addresses', cell: (c) => `${c.addresses.length}`, align: 'right' },
+    { key: 'name', header: 'Client Name', cell: (c) => <span className="font-medium">{c.name}</span>, sortValue: (c) => c.name },
+    { key: 'phone', header: 'Phone', cell: (c) => <span className="text-text-muted">{c.contactPhone}</span> },
+    { key: 'pickup', header: 'Pickup Address', cell: (c) => addressLine(addr(c, 'pickup')) },
+    { key: 'dropoff', header: 'Drop-off Address', cell: (c) => addressLine(addr(c, 'dropoff')) },
+    {
+      key: 'activeRoutes',
+      header: 'Active Routes',
+      align: 'center',
+      sortValue: (c) => activeRoutesByClient[c.id] ?? 0,
+      cell: (c) => <span className="font-medium tabular-nums">{activeRoutesByClient[c.id] ?? 0}</span>,
+    },
+    { key: 'status', header: 'Status', cell: (c) => <StatusBadge status={c.status} />, sortValue: (c) => c.status },
   ]
 
   return (
@@ -48,9 +81,12 @@ export function ClientsListPage() {
         onRetry={refetch}
         onRowClick={(c) => navigate(`/clients/${c.id}`)}
         rowActions={(c) => (
-          <Button size="icon" variant="ghost" aria-label={`Edit ${c.name}`} onClick={() => navigate(`/clients/${c.id}/edit`)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <RowActionsMenu
+            itemLabel={c.name}
+            onEdit={() => navigate(`/clients/${c.id}/edit`)}
+            onDelete={() => remove.mutateAsync(c.id)}
+            deleteSuccessMessage="Client deleted"
+          />
         )}
         pagination={{ page, pageSize: params.pageSize!, total: data?.total ?? 0, onPageChange: setPage }}
         emptyTitle="No clients found"

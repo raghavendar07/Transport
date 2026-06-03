@@ -5,6 +5,7 @@ import { Button, Card, CardBody, CardHeader, CardTitle, AsyncBoundary } from '@/
 import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
 import { StatusBadge } from '@/components/domain/StatusBadge'
 import { formatDate } from '@/lib/format'
+import { DocumentsSummary, DocumentExpiryAlert } from '../components/DocumentsSummary'
 import { vehiclesApi } from '../hooks'
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -41,6 +42,9 @@ export function VehicleDetailPage() {
               </Button>
             }
           />
+          <div className="mb-6">
+            <DocumentExpiryAlert documents={v.documents} />
+          </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -83,6 +87,14 @@ export function VehicleDetailPage() {
                     }
                   />
                 </dl>
+              </CardBody>
+            </Card>
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Required Documents</CardTitle>
+              </CardHeader>
+              <CardBody>
+                <DocumentsSummary documents={v.documents} />
               </CardBody>
             </Card>
           </div>

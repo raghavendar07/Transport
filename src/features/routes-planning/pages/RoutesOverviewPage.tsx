@@ -1,39 +1,61 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Copy, Truck, Clock, MapPin } from 'lucide-react'
+import { Plus, Copy, Truck, Clock, MapPin, CalendarDays } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
-import { Button, Card, CardBody, Input, AsyncBoundary, EmptyState } from '@/components/ui'
+import { Button, Card, CardBody, AsyncBoundary, EmptyState } from '@/components/ui'
+import { SearchInput, RowActionsMenu } from '@/components/domain'
 import { RouteStatusBadge } from '@/components/domain/StatusBadge'
 import { cn } from '@/lib/cn'
-import type { RouteSession } from '@/lib/api/types'
-import { useRoutesList } from '../hooks'
+import { formatDate } from '@/lib/format'
+import type { RouteStatus } from '@/lib/api/types'
+import { useRoutesList, useRouteMutations } from '../hooks'
 import { useFleetOptions } from '../useFleetOptions'
 import { CopyRoutesDialog } from '../components/CopyRoutesDialog'
 
-const TODAY = '2026-06-01'
+type TabKey = 'all' | RouteStatus
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'all', label: 'All Routes' },
+  { key: 'draft', label: 'Draft' },
+  { key: 'published', label: 'Published' },
+  { key: 'in_progress', label: 'In Progress' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'cancelled', label: 'Cancelled' },
+]
 
 export function RoutesOverviewPage() {
   const navigate = useNavigate()
-  const [date, setDate] = useState(TODAY)
-  const [session, setSession] = useState<RouteSession>('AM')
+  const [tab, setTab] = useState<TabKey>('all')
+  const [search, setSearch] = useState('')
   const [copyOpen, setCopyOpen] = useState(false)
   const { driverName, vehicleLabel } = useFleetOptions()
 
-  const query = useRoutesList({ pageSize: 100, filters: { date } })
-  const routes = (query.data?.items ?? []).filter((r) => r.session === session)
+  const query = useRoutesList({ pageSize: 200 })
+  const { remove } = useRouteMutations()
+  const all = useMemo(() => query.data?.items ?? [], [query.data])
+
+  const counts = useMemo(() => {
+    const c: Record<TabKey, number> = { all: all.length, draft: 0, published: 0, in_progress: 0, completed: 0, cancelled: 0 }
+    for (const r of all) c[r.status] += 1
+    return c
+  }, [all])
+
+  const routes = all
+    .filter((r) => (tab === 'all' ? true : r.status === tab))
+    .filter((r) => r.name.toLowerCase().includes(search.trim().toLowerCase()))
 
   return (
     <div>
       <PageHeader
         title="Route Planning"
-        description="Plan and publish daily AM/PM routes."
+        description="Plan, publish and track delivery routes."
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setCopyOpen(true)}>
               <Copy className="h-4 w-4" />
               Copy day
             </Button>
-            <Button onClick={() => navigate(`/routes/new?date=${date}&session=${session}`)}>
+            <Button onClick={() => navigate('/routes/new')}>
               <Plus className="h-4 w-4" />
               Create route
             </Button>
@@ -41,29 +63,35 @@ export function RoutesOverviewPage() {
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-end gap-4">
-        <div>
-          <label htmlFor="route-date" className="mb-1.5 block text-sm font-medium text-text">
-            Date
-          </label>
-          <Input id="route-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-44" />
-        </div>
-        <div role="tablist" aria-label="Session" className="inline-flex rounded-md border border-border p-0.5">
-          {(['AM', 'PM'] as RouteSession[]).map((s) => (
-            <button
-              key={s}
-              role="tab"
-              aria-selected={session === s}
-              onClick={() => setSession(s)}
+      <div role="tablist" aria-label="Route status" className="mb-4 flex flex-wrap gap-1 border-b border-border">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setTab(t.key)}
+            className={cn(
+              '-mb-px flex items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors',
+              tab === t.key
+                ? 'border-brand text-brand'
+                : 'border-transparent text-text-muted hover:text-text',
+            )}
+          >
+            {t.label}
+            <span
               className={cn(
-                'rounded px-4 py-1.5 text-sm font-medium transition-colors',
-                session === s ? 'bg-brand text-brand-fg' : 'text-text-muted hover:text-text',
+                'rounded-full px-2 py-0.5 text-xs tabular-nums',
+                tab === t.key ? 'bg-brand text-brand-fg' : 'bg-surface-hover text-text-muted',
               )}
             >
-              {s}
-            </button>
-          ))}
-        </div>
+              {counts[t.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-4 max-w-md">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search routes by name…" />
       </div>
 
       <AsyncBoundary
@@ -75,10 +103,10 @@ export function RoutesOverviewPage() {
           <Card>
             <EmptyState
               icon={MapPin}
-              title={`No ${session} routes for this date`}
-              description="Create a route or copy a previous day."
+              title="No routes here"
+              description="Create a route or adjust the filters above."
               action={
-                <Button size="sm" onClick={() => navigate(`/routes/new?date=${date}&session=${session}`)}>
+                <Button size="sm" onClick={() => navigate('/routes/new')}>
                   <Plus className="h-4 w-4" />
                   Create route
                 </Button>
@@ -96,13 +124,23 @@ export function RoutesOverviewPage() {
                 onClick={() => navigate(`/routes/${r.id}`)}
               >
                 <CardBody>
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-text">
-                      {r.session} · {r.stops.length} stop{r.stops.length === 1 ? '' : 's'}
-                    </span>
-                    <RouteStatusBadge status={r.status} />
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <span className="text-sm font-semibold text-text">{r.name || 'Untitled route'}</span>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <RouteStatusBadge status={r.status} />
+                      <RowActionsMenu
+                        itemLabel={r.name || 'route'}
+                        onEdit={() => navigate(`/routes/${r.id}`)}
+                        onDelete={() => remove.mutateAsync(r.id)}
+                        deleteSuccessMessage="Route deleted"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5 text-sm text-text-muted">
+                    <p className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-text-subtle" aria-hidden />
+                      {formatDate(r.date)} · {r.session} · {r.stops.length} stop{r.stops.length === 1 ? '' : 's'}
+                    </p>
                     <p className="flex items-center gap-2">
                       <Truck className="h-4 w-4 text-text-subtle" aria-hidden />
                       {driverName(r.driverId)} · {vehicleLabel(r.vehicleId)}
@@ -121,7 +159,7 @@ export function RoutesOverviewPage() {
         )}
       </AsyncBoundary>
 
-      <CopyRoutesDialog open={copyOpen} onOpenChange={setCopyOpen} defaultFrom={date} />
+      <CopyRoutesDialog open={copyOpen} onOpenChange={setCopyOpen} defaultFrom="2026-06-01" />
     </div>
   )
 }

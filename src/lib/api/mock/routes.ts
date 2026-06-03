@@ -82,7 +82,9 @@ export const mockRoutes = {
     for (const r of source) {
       const clone = deepClone(r)
       await routes.create(tenantId, {
+        name: clone.name,
         date: toDate,
+        startTime: clone.startTime,
         session: clone.session,
         driverId: reassign?.driverId ?? clone.driverId,
         vehicleId: reassign?.vehicleId ?? clone.vehicleId,

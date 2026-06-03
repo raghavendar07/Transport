@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { Plus, Pencil, Truck } from 'lucide-react'
+import { Plus, Truck } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import { Button, DataTable, type Column } from '@/components/ui'
-import { FilterBar } from '@/components/domain'
+import { FilterBar, RowActionsMenu } from '@/components/domain'
 import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
 import { StatusBadge } from '@/components/domain/StatusBadge'
 import { formatDate } from '@/lib/format'
@@ -14,6 +14,7 @@ export function DriversListPage() {
   const navigate = useNavigate()
   const { search, filters, page, setPage, setFilter, onSearchChange, clear, params } = useListControls()
   const { data, isLoading, isError, refetch } = driversApi.useList(params)
+  const remove = driversApi.useRemove()
 
   const columns: Column<Driver>[] = [
     { key: 'name', header: 'Name', cell: (d) => <span className="font-medium">{d.name}</span>, sortValue: (d) => d.name },
@@ -81,14 +82,12 @@ export function DriversListPage() {
         onRetry={refetch}
         onRowClick={(d) => navigate(`/drivers/${d.id}`)}
         rowActions={(d) => (
-          <Button
-            size="icon"
-            variant="ghost"
-            aria-label={`Edit ${d.name}`}
-            onClick={() => navigate(`/drivers/${d.id}/edit`)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
+          <RowActionsMenu
+            itemLabel={d.name}
+            onEdit={() => navigate(`/drivers/${d.id}/edit`)}
+            onDelete={() => remove.mutateAsync(d.id)}
+            deleteSuccessMessage="Driver deleted"
+          />
         )}
         pagination={{
           page,
