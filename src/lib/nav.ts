@@ -13,7 +13,6 @@ import {
   ShieldAlert,
   TriangleAlert,
   Settings,
-  Bell,
   type LucideIcon,
 } from 'lucide-react'
 import type { Role, Permission } from '@/lib/rbac'
@@ -73,7 +72,6 @@ const ADMIN_NAV: NavSection[] = [
     items: [
       { to: '/users', label: 'Users', icon: Users, permission: 'users.manage' },
       { to: '/settings', label: 'Settings', icon: Settings, permission: 'settings.manage' },
-      { to: '/notifications', label: 'Notifications', icon: Bell, permission: 'account.self' },
     ],
   },
 ]
@@ -101,7 +99,6 @@ const DISPATCHER_NAV: NavSection[] = [
     items: [
       { to: '/reports', label: 'Reports', icon: FileBarChart, permission: 'reports.view' },
       { to: '/alerts', label: 'Alerts', icon: TriangleAlert, permission: 'alerts.view' },
-      { to: '/notifications', label: 'Notifications', icon: Bell, permission: 'account.self' },
     ],
   },
 ]
