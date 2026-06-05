@@ -54,6 +54,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'monitoring.view',
     'alerts.view',
     'reports.view',
+    'compliance.view',
     'account.self',
   ],
   // Driver — mobile app only.

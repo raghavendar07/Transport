@@ -96,6 +96,12 @@ const DISPATCHER_NAV: NavSection[] = [
     ],
   },
   {
+    title: 'Compliance',
+    items: [
+      { to: '/compliance', label: 'Compliance Dashboard', icon: ShieldAlert, permission: 'compliance.view' },
+    ],
+  },
+  {
     items: [
       { to: '/reports', label: 'Reports', icon: FileBarChart, permission: 'reports.view' },
       { to: '/alerts', label: 'Alerts', icon: TriangleAlert, permission: 'alerts.view' },
