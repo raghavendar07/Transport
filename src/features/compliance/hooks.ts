@@ -108,3 +108,12 @@ export function useGenerateReport() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reports', tenantId] }),
   })
 }
+export function useArchiveReports() {
+  const tenantId = useTenantId()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { ids: string[]; archived: boolean }) =>
+      api.reports.archive(tenantId, args.ids, args.archived),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['reports', tenantId] }),
+  })
+}

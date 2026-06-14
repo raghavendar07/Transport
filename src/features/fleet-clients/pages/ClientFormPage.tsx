@@ -13,6 +13,7 @@ import {
   Textarea,
   FormField,
   Combobox,
+  DatePicker,
   Spinner,
   useToast,
 } from '@/components/ui'
@@ -21,9 +22,13 @@ import { clientSchema, type ClientValues } from '../schema'
 import { clientsApi } from '../hooks'
 
 const EMPTY: ClientValues = {
+  uci: '',
   name: '',
   contactName: '',
   contactPhone: '',
+  authorizationNumber: '',
+  authorizationStartDate: '',
+  authorizationExpiry: '',
   emergencyContact: '',
   notes: '',
   status: 'active',
@@ -58,9 +63,13 @@ export function ClientFormPage() {
     resolver: zodResolver(clientSchema),
     values: existing
       ? {
+          uci: existing.uci,
           name: existing.name,
           contactName: existing.contactName,
           contactPhone: existing.contactPhone,
+          authorizationNumber: existing.authorizationNumber ?? '',
+          authorizationStartDate: existing.authorizationStartDate ?? '',
+          authorizationExpiry: existing.authorizationExpiry ?? '',
           emergencyContact: existing.emergencyContact,
           notes: existing.notes,
           status: existing.status,
@@ -90,8 +99,8 @@ export function ClientFormPage() {
       await update.mutateAsync({ id: id!, data: values })
       toast.success('Client updated')
     } else {
-      // uci is ignored by the API and assigned server-side; pass a placeholder.
-      await create.mutateAsync({ ...values, uci: '' })
+      // UCI is supplied by the operator and must match the authorization document.
+      await create.mutateAsync(values)
       toast.success('Client added')
     }
     navigate('/clients')
@@ -117,14 +126,19 @@ export function ClientFormPage() {
             <CardTitle>Client details</CardTitle>
           </CardHeader>
           <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="UCI" hint="Auto-generated and unique — assigned on save.">
+            <FormField
+              label="UCI"
+              required
+              error={errors.uci?.message}
+              hint="Cannot be auto-assigned — must exactly match the UCI printed on the authorization document."
+            >
               {(f) => (
                 <Input
                   {...f}
-                  value={existing?.uci ?? 'Assigned automatically'}
-                  readOnly
-                  disabled
-                  className="font-mono"
+                  {...register('uci')}
+                  placeholder="UCI-000123"
+                  className="font-mono uppercase"
+                  autoComplete="off"
                 />
               )}
             </FormField>
@@ -150,6 +164,29 @@ export function ClientFormPage() {
             </FormField>
             <FormField label="Contact phone" required error={errors.contactPhone?.message}>
               {(f) => <Input {...f} {...register('contactPhone')} />}
+            </FormField>
+            <FormField
+              label="Authorization number"
+              required
+              error={errors.authorizationNumber?.message}
+              hint="Medicaid / broker / agency reference."
+            >
+              {(f) => <Input {...f} {...register('authorizationNumber')} placeholder="AUTH-YYYY-XXXX" />}
+            </FormField>
+            <FormField
+              label="Authorization start date"
+              required
+              error={errors.authorizationStartDate?.message}
+            >
+              {(f) => <DatePicker {...f} {...register('authorizationStartDate')} />}
+            </FormField>
+            <FormField
+              label="Authorization expiry"
+              required
+              error={errors.authorizationExpiry?.message}
+              hint="Drivers cannot be routed for expired authorizations without approval."
+            >
+              {(f) => <DatePicker {...f} {...register('authorizationExpiry')} />}
             </FormField>
             <FormField label="Emergency contact" required error={errors.emergencyContact?.message}>
               {(f) => <Input {...f} {...register('emergencyContact')} />}

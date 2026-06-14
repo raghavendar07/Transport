@@ -17,7 +17,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         return (
           <div key={i}>
             {section.title && (
-              <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7E8492]">
+              <p className="mb-2 px-3 text-[10px] font-medium uppercase tracking-[0.12em] text-[#7E8492]">
                 {section.title}
               </p>
             )}
@@ -28,7 +28,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     {({ isActive }) => (
                       <span
                         className={cn(
-                          'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150',
+                          'relative flex items-center gap-3 rounded-[8px] px-3 py-2 text-sm font-medium transition-colors duration-150',
                           isActive
                             ? 'bg-[#293140] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]'
                             : 'text-[#C7CAD2] hover:bg-[#1F232C]',

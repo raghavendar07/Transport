@@ -52,8 +52,8 @@
   --radius-lg: 0.875rem;
 
   /* Shadow */
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.08);
-  --shadow-pop: 0 8px 24px rgb(16 24 40 / 0.12);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow-pop: 0 4px 16px rgb(16 24 40 / 0.08);
 
   /* Focus ring */
   --focus: 27 111 196;

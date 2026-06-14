@@ -53,7 +53,7 @@ const DEMO_ROWS: DemoRow[] = [
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-text">{title}</h2>
+      <h2 className="text-base font-semibold text-text">{title}</h2>
       <Card>
         <CardBody className="flex flex-wrap items-start gap-4">{children}</CardBody>
       </Card>
@@ -84,7 +84,7 @@ export function KitchenSink() {
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-8">
       <header>
-        <h1 className="text-2xl font-semibold text-text">Component Kitchen Sink</h1>
+        <h1 className="text-xl font-semibold text-text">Component Kitchen Sink</h1>
         <p className="text-sm text-text-muted">Every primitive in every state — the P2 verification page.</p>
       </header>
 

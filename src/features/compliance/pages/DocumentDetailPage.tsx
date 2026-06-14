@@ -74,7 +74,7 @@ export function DocumentDetailPage() {
                 {doc.expiryDate ? (
                   <>
                     <ExpiryBadge date={doc.expiryDate} />
-                    <p className="mt-3 text-2xl font-semibold text-text">{expiryCountdown(doc.expiryDate)}</p>
+                    <p className="mt-3 text-2xl font-bold text-text">{expiryCountdown(doc.expiryDate)}</p>
                     <p className="text-sm text-text-muted">{formatDate(doc.expiryDate)}</p>
                   </>
                 ) : (

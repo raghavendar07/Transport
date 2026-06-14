@@ -1,11 +1,45 @@
 import { useParams } from 'react-router-dom'
-import { MapPin, Clock, Image as ImageIcon, CheckCircle2, Circle } from 'lucide-react'
+import {
+  MapPin,
+  Image as ImageIcon,
+  CheckCircle2,
+  Circle,
+  LogIn,
+  ShieldCheck,
+  PlayCircle,
+  Flag,
+  ArrowUpFromLine,
+  ArrowDownToLine,
+  StickyNote,
+  type LucideIcon,
+} from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import { Card, CardHeader, CardTitle, CardBody, AsyncBoundary } from '@/components/ui'
 import { MapView } from '@/components/domain'
 import { RouteStatusBadge } from '@/components/domain/StatusBadge'
+import { cn } from '@/lib/cn'
+import type { LiveEvent } from '@/lib/api/mock/monitoring'
 
 import { useLiveRoute } from '../hooks'
+
+const EVENT_META: Record<LiveEvent['kind'], { icon: LucideIcon; tone: string; bg: string }> = {
+  check_in: { icon: LogIn, tone: 'text-status-active', bg: 'bg-status-active-bg' },
+  safety: { icon: ShieldCheck, tone: 'text-brand', bg: 'bg-brand-100' },
+  route: { icon: PlayCircle, tone: 'text-status-warn', bg: 'bg-status-warn-bg' },
+  arrival: { icon: Flag, tone: 'text-brand', bg: 'bg-brand-100' },
+  pickup: { icon: ArrowUpFromLine, tone: 'text-status-active', bg: 'bg-status-active-bg' },
+  drop: { icon: ArrowDownToLine, tone: 'text-status-info', bg: 'bg-status-info-bg' },
+  note: { icon: StickyNote, tone: 'text-text-muted', bg: 'bg-surface-hover' },
+}
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
 
 export function LiveRouteDetailPage() {
   const { id } = useParams()
@@ -42,20 +76,48 @@ export function LiveRouteDetailPage() {
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex items-center justify-between">
                 <CardTitle>Event log</CardTitle>
+                <span className="text-xs text-text-subtle">{live.events.length} events</span>
               </CardHeader>
               <CardBody>
-                <ol className="space-y-3">
-                  {live.events.map((e, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span className="flex items-center gap-1 text-xs font-medium text-text-subtle">
-                        <Clock className="h-3.5 w-3.5" aria-hidden />
-                        {e.time}
-                      </span>
-                      <span className="text-sm text-text">{e.label}</span>
-                    </li>
-                  ))}
+                <ol className="relative space-y-5">
+                  {/* Vertical connector line */}
+                  <span
+                    className="absolute left-[15px] top-2 bottom-2 w-px bg-border"
+                    aria-hidden
+                  />
+                  {live.events.map((e, i) => {
+                    const meta = EVENT_META[e.kind]
+                    const Icon = meta.icon
+                    return (
+                      <li key={i} className="relative flex gap-3">
+                        <span
+                          className={cn(
+                            'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-card',
+                            meta.bg,
+                            meta.tone,
+                          )}
+                        >
+                          <Icon className="h-4 w-4" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <div className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-text">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-[10px] font-semibold text-brand-700">
+                                {initials(e.actor)}
+                              </span>
+                              {e.actor}
+                            </span>
+                            <span className="text-xs text-text-subtle">
+                              {e.relative} · {e.time}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-text-muted">{e.label}</p>
+                        </div>
+                      </li>
+                    )
+                  })}
                 </ol>
               </CardBody>
             </Card>

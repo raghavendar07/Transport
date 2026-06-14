@@ -18,23 +18,25 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       <button
         type="button"
         onClick={onMenuClick}
-        className="rounded-md p-2 text-text-muted hover:bg-surface-hover hover:text-text lg:hidden"
+        className="rounded-[8px] p-2 text-text-muted hover:bg-surface-hover hover:text-text lg:hidden"
         aria-label="Open navigation menu"
       >
         <Menu className="h-5 w-5" aria-hidden />
       </button>
-      <div className="mx-auto w-full max-w-md">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search across the portal…"
-          aria-label="Global search"
-        />
+      <div className="flex flex-1 justify-center">
+        <div className="w-full max-w-md">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search across the portal…"
+            aria-label="Global search"
+          />
+        </div>
       </div>
 
       <button
         type="button"
-        className="relative rounded-md p-2 text-text-muted hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="relative rounded-[8px] p-2 text-text-muted hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         aria-label="Notifications"
         onClick={() => navigate('/notifications')}
       >
@@ -43,7 +45,7 @@ export function TopBar({ onMenuClick }: { onMenuClick?: () => void }) {
       </button>
 
       <DropdownMenu.Root>
-        <DropdownMenu.Trigger className="flex items-center gap-2 rounded-md p-1 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
+        <DropdownMenu.Trigger className="flex items-center gap-2 rounded-[8px] p-1 hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus">
           <Avatar name={session?.name ?? 'User'} size="sm" />
           <span className="hidden text-left sm:block">
             <span className="block text-sm font-medium leading-tight text-text">{session?.name}</span>

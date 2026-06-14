@@ -123,7 +123,7 @@ function Mini({ icon: Icon, label, value }: { icon: typeof IdCard; label: string
   return (
     <div className="text-center">
       <Icon className={`mx-auto h-6 w-6 ${value > 0 ? 'text-status-warn' : 'text-text-subtle'}`} aria-hidden />
-      <p className="mt-1 text-2xl font-semibold text-text">{value}</p>
+      <p className="mt-1 text-2xl font-bold text-text">{value}</p>
       <p className="text-xs text-text-muted">{label}</p>
     </div>
   )

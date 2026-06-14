@@ -135,7 +135,7 @@ function StopCard({
               </h4>
               <span
                 className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                  'inline-flex items-center gap-1 rounded-[2px] px-2 py-0.5 text-xs font-medium',
                   isPickup ? 'bg-brand-100 text-brand-700' : 'bg-status-active-bg text-status-active',
                 )}
               >

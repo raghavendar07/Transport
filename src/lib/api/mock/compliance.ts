@@ -134,4 +134,12 @@ export const mockReports = {
         }),
     )
   },
+  async archive(tenantId: string, ids: string[], archived: boolean): Promise<void> {
+    for (const job of reportJobs) {
+      if (job.tenantId === tenantId && ids.includes(job.id)) {
+        job.archived = archived
+      }
+    }
+    await delay(undefined)
+  },
 }

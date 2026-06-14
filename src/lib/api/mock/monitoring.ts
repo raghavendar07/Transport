@@ -30,8 +30,16 @@ export interface Alert {
 }
 
 export interface LiveEvent {
+  /** HH:mm — wall-clock time of the event. */
   time: string
+  /** Short human-readable description. */
   label: string
+  /** Name of the actor that triggered the event (driver, dispatcher, system). */
+  actor: string
+  /** Relative time string like "5 min ago" or "2 hours ago" for display. */
+  relative: string
+  /** Bucket the event under a category — drives icon + colour in the timeline. */
+  kind: 'check_in' | 'safety' | 'route' | 'arrival' | 'pickup' | 'drop' | 'note'
 }
 
 export interface LiveRoute {
@@ -111,11 +119,43 @@ export const mockMonitoring = {
       { lat: 53.4779, lng: -2.2452 },
       { lat: 53.4808, lng: -2.2426 },
     ]
+    const driverName = (await fleetCollections.drivers.get(tenantId, route.driverId)).name
     const events: LiveEvent[] = [
-      { time: '08:02', label: 'Route started — driver checked in' },
-      { time: '08:10', label: 'Pre-trip safety checklist completed' },
-      { time: '08:16', label: 'Arrived at Sunrise Care Home' },
-      { time: '08:19', label: 'Pickup confirmed with digital attestation' },
+      {
+        time: '07:55',
+        relative: '2 hours ago',
+        actor: driverName,
+        kind: 'check_in',
+        label: 'Driver checked in for shift',
+      },
+      {
+        time: '08:00',
+        relative: '2 hours ago',
+        actor: driverName,
+        kind: 'safety',
+        label: 'Pre-trip safety check completed — all items pass',
+      },
+      {
+        time: '08:05',
+        relative: '1 hour ago',
+        actor: driverName,
+        kind: 'route',
+        label: 'Route started — heading to first pickup',
+      },
+      {
+        time: '08:16',
+        relative: '55 min ago',
+        actor: driverName,
+        kind: 'arrival',
+        label: `Arrived at ${route.stops[0]?.clientName ?? 'first stop'}`,
+      },
+      {
+        time: '08:19',
+        relative: '52 min ago',
+        actor: driverName,
+        kind: 'pickup',
+        label: 'Pickup confirmed with digital attestation',
+      },
     ]
     const photos = route.stops.slice(0, 2).map((s: RouteStop, i) => ({
       id: `p${i}`,

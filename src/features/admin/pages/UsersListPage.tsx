@@ -33,7 +33,20 @@ export function UsersListPage() {
   const columns: Column<User>[] = [
     { key: 'name', header: 'Name', cell: (u) => <span className="font-medium">{u.name}</span>, sortValue: (u) => u.name },
     { key: 'email', header: 'Email', cell: (u) => <span className="text-text-muted">{u.email}</span> },
-    { key: 'role', header: 'Role', cell: (u) => <RoleBadge role={u.role} /> },
+    {
+      key: 'roles',
+      header: 'Roles',
+      cell: (u) => {
+        const list = u.roles && u.roles.length > 0 ? u.roles : [u.role]
+        return (
+          <div className="flex flex-wrap gap-1">
+            {list.map((r) => (
+              <RoleBadge key={r} role={r} />
+            ))}
+          </div>
+        )
+      },
+    },
     { key: 'status', header: 'Status', cell: (u) => <StatusBadge status={u.status} /> },
     {
       key: 'lastLogin',

@@ -25,7 +25,14 @@ export interface User {
   tenantId: ID
   name: string
   email: string
+  /** Primary role — used for the role chip + portal landing page. Derived from `roles[0]`. */
   role: Role
+  /** All assigned roles. Permissions union across every entry. */
+  roles: Role[]
+  /** Per-user permission overrides for the Admin role. Empty / undefined = role defaults. */
+  adminPermissions?: string[]
+  /** Per-user permission overrides for the Dispatcher role. Empty / undefined = role defaults. */
+  dispatcherPermissions?: string[]
   status: EntityStatus
   lastLoginAt: string | null
   createdAt: string
@@ -54,6 +61,9 @@ export interface RequiredDocument {
   fileSize: number | null
 }
 
+/** Mock-only field used to demonstrate dispatch states; real backend would derive these. */
+export type DriverAvailability = 'available' | 'scheduled' | 'en_route' | 'sick' | 'other'
+
 export interface Driver {
   id: ID
   tenantId: ID
@@ -66,11 +76,30 @@ export interface Driver {
   address: string
   dob: string
   status: EntityStatus
+  /** Mock dispatch state. Overrides derived "on a live route" status when set. */
+  availability?: DriverAvailability
+  /** Free-text note shown next to availability — e.g. "Annual leave", "Vehicle maintenance". */
+  availabilityNote?: string
   documents: RequiredDocument[]
   createdAt: string
 }
 
 export type FuelType = 'diesel' | 'petrol' | 'electric' | 'hybrid'
+
+/** A single maintenance event on a vehicle. Type is free-form so operators can add their own categories. */
+export interface MaintenanceLog {
+  id: ID
+  /** Free-form maintenance type — e.g. "Oil Change", "Lift Maintenance", "Tune-up". */
+  type: string
+  /** ISO date when the maintenance was performed. */
+  date: string
+  /** Vehicle odometer reading (miles) at the time of service. */
+  mileage: number
+  /** Optional notes from the technician. */
+  notes?: string
+  /** Optional uploaded invoice / report file. */
+  fileName?: string | null
+}
 
 export interface Vehicle {
   id: ID
@@ -80,13 +109,35 @@ export interface Vehicle {
   model: string
   year: number
   capacity: number
+  /** Number of wheelchair spaces. Each space consumes 4 seats. */
+  wheelchairSpaces: number
+  /** Vehicle size class — drives icon, defaults and reporting. */
+  size: 'small' | 'medium' | 'large'
   fuelType: FuelType
   insuranceExpiry: string
   registrationExpiry: string
   odometer: number
   status: EntityStatus
   documents: RequiredDocument[]
+  maintenanceLogs?: MaintenanceLog[]
+  /** Free-form attachments — additional docs / notes attached by operators. */
+  attachments?: VehicleAttachment[]
   createdAt: string
+}
+
+/** Any pertinent doc / note attached to a vehicle beyond the required documents. */
+export interface VehicleAttachment {
+  id: ID
+  /** Free-text label — e.g. "Body shop quote", "Warranty info", "Service contract". */
+  label: string
+  /** Optional context. */
+  notes?: string
+  /** Uploaded file name. */
+  fileName: string
+  /** File size in bytes. */
+  fileSize: number
+  /** ISO datetime when the file was attached. */
+  uploadedAt: string
 }
 
 /** Role distinguishes the pickup vs drop-off address on a client record. */
@@ -112,6 +163,12 @@ export interface Client {
   contactName: string
   contactPhone: string
   addresses: ClientAddress[]
+  /** Insurance / agency authorization reference number (e.g. Medicaid auth, broker ID). */
+  authorizationNumber: string
+  /** ISO date when the authorization becomes effective. */
+  authorizationStartDate: string
+  /** ISO date when the authorization expires. Drives route-add blocking. */
+  authorizationExpiry: string
   emergencyContact: string
   notes: string
   status: EntityStatus
@@ -181,7 +238,14 @@ export interface ComplianceDocument {
   uploadedAt: string
 }
 
-export type ReportType = 'route_summary' | 'driver' | 'vehicle' | 'client'
+export type ReportType =
+  | 'route_summary'
+  | 'driver'
+  | 'vehicle'
+  | 'client'
+  | 'month_end_billing'
+  | 'vehicle_mileage'
+  | 'daily_logs'
 export type ReportJobStatus = 'queued' | 'generating' | 'ready' | 'failed'
 
 export interface GeneratedReport {
@@ -193,7 +257,10 @@ export interface GeneratedReport {
   dateTo: string
   filters: Record<string, string>
   createdAt: string
-  expiresAt: string // 90-day retention
+  /** Retention horizon — DDS requires 3 years (~1095 days). */
+  expiresAt: string
+  /** True once the operator moves the report into archive storage. */
+  archived?: boolean
 }
 
 export interface AuditLogEntry {
@@ -234,8 +301,12 @@ export const NOTIFICATION_EVENTS = [
 ] as const
 export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[number]
 
-/** Per event × channel toggle matrix. */
-export type NotificationPreferences = Record<NotificationEvent, Record<NotificationChannel, boolean>>
+/**
+ * Per event × channel toggle matrix. Keyed by string so per-document-type rules
+ * (e.g. `doc_expiring:CPR`) can be added without a type change — UI groups them
+ * dynamically off the document type catalogue.
+ */
+export type NotificationPreferences = Record<string, Record<NotificationChannel, boolean>>
 
 /** Generic paginated list envelope returned by list endpoints. */
 export interface Paginated<T> {

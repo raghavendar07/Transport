@@ -58,9 +58,13 @@ export const mockFleet = {
   vehicles: makeCrud(vehicles),
   clients: {
     ...clientsCrud,
-    // UCI is server-assigned: ignore any client-supplied value and stamp a unique one.
+    // UCI must match the authorization document — operator supplies it.
+    // Fall back to a generated value only if the form leaves it blank (defensive).
     create: (tenantId: string, data: Omit<Client, 'id' | 'tenantId' | 'createdAt'>) =>
-      clientsCrud.create(tenantId, { ...data, uci: nextUci(tenantId) }),
+      clientsCrud.create(tenantId, {
+        ...data,
+        uci: data.uci && data.uci.trim() ? data.uci.trim().toUpperCase() : nextUci(tenantId),
+      }),
   },
   // Checklist templates are admin-only setup.
   checklists: makeCrud(checklists, 'checklists.manage'),

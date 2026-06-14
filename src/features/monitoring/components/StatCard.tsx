@@ -20,7 +20,7 @@ export function StatCard({
           <Icon className="h-5 w-5" aria-hidden />
         </div>
         <div>
-          <p className="text-2xl font-semibold text-text">{value}</p>
+          <p className="text-2xl font-bold text-text">{value}</p>
           <p className="text-sm text-text-muted">{label}</p>
         </div>
       </CardBody>

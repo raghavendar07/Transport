@@ -30,6 +30,8 @@ export const vehicleSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   year: z.coerce.number().int().min(1990, 'Enter a valid year').max(2100),
   capacity: z.coerce.number().int().min(1, 'Capacity must be at least 1'),
+  wheelchairSpaces: z.coerce.number().int().min(0).max(8).default(0),
+  size: z.enum(['small', 'medium', 'large']).default('medium'),
   fuelType: z.enum(['diesel', 'petrol', 'electric', 'hybrid']),
   insuranceExpiry: z.string().min(1, 'Insurance expiry is required'),
   registrationExpiry: z.string().min(1, 'Registration expiry is required'),
@@ -52,11 +54,21 @@ export const clientAddressSchema = z.object({
 })
 
 export const clientSchema = z.object({
-  // UCI is auto-generated server-side; never collected from the form.
+  /**
+   * Manually entered. Must match the UCI printed on the authorization document —
+   * cannot be auto-assigned because the agency-issued UCI is the legal identifier.
+   */
+  uci: z
+    .string()
+    .min(3, 'UCI is required (must match the authorization document)')
+    .regex(/^[A-Z0-9-]+$/i, 'UCI may only contain letters, numbers and hyphens'),
   name: z.string().min(2, 'Name is required'),
   contactName: z.string().min(2, 'Contact name is required'),
   contactPhone: phone,
   addresses: z.array(clientAddressSchema).length(2, 'Pickup and drop-off addresses are required'),
+  authorizationNumber: z.string().min(2, 'Authorization number is required'),
+  authorizationStartDate: z.string().min(1, 'Authorization start date is required'),
+  authorizationExpiry: z.string().min(1, 'Authorization expiry is required'),
   emergencyContact: z.string().min(2, 'Emergency contact is required'),
   notes: z.string().default(''),
   status: z.enum(['active', 'inactive']).default('active'),

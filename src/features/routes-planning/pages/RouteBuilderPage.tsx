@@ -15,10 +15,16 @@ import {
   Sparkles,
   Eye,
   CheckCircle2,
+  Printer,
   CalendarDays,
   Truck,
   CheckCheck,
+  CalendarClock,
+  Activity,
+  Thermometer,
+  HelpCircle,
   User as UserIcon,
+  type LucideIcon,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import {
@@ -43,6 +49,7 @@ import type { RoutePlan, RouteSession, RouteStop } from '@/lib/api/types'
 import { useRoute, useRouteMutations, useCheckOverlap } from '../hooks'
 import { useFleetOptions } from '../useFleetOptions'
 import { PassengerStopTimeline } from '../components/PassengerStopTimeline'
+import { totalRouteDistanceMiles, outOfRangeStopIds, KM_TO_MILES } from '../distance'
 import { AddStopPanel } from '../components/AddStopPanel'
 import { SubstituteDriverModal } from '../components/SubstituteDriverModal'
 import { CancelReasonDialog } from '../components/CancelReasonDialog'
@@ -50,6 +57,24 @@ import { driversApi, vehiclesApi, clientsApi } from '@/features/fleet-clients/ho
 
 let tmpStop = 0
 const stopId = () => `news-${tmpStop++}`
+
+interface AvailMeta {
+  label: string
+  tone: string
+  dot: string
+  icon: LucideIcon
+}
+
+const AVAILABILITY_META: Record<
+  'available' | 'scheduled' | 'en_route' | 'sick' | 'other',
+  AvailMeta
+> = {
+  available: { label: 'Available', tone: 'text-status-active', dot: 'bg-status-active', icon: CheckCheck },
+  scheduled: { label: 'Scheduled', tone: 'text-brand', dot: 'bg-brand', icon: CalendarClock },
+  en_route: { label: 'En-route', tone: 'text-status-warn', dot: 'bg-status-warn', icon: Activity },
+  sick: { label: 'Unavailable (Sick)', tone: 'text-status-expired', dot: 'bg-status-expired', icon: Thermometer },
+  other: { label: 'Other', tone: 'text-text-subtle', dot: 'bg-text-subtle', icon: HelpCircle },
+}
 
 /** Derive AM / PM from a HH:mm string. */
 function sessionFromTime(t: string): RouteSession {
@@ -70,6 +95,7 @@ export function RouteBuilderPage() {
     driverName,
     vehicleLabel,
     driverAvailability,
+    availabilityNote,
     vehicleOnRoute,
     isLoading: fleetLoading,
   } = useFleetOptions()
@@ -175,8 +201,13 @@ export function RouteBuilderPage() {
   const passengers = useMemo(() => new Set(stops.map((s) => s.clientId)).size, [stops])
   const capacity = selectedVehicle?.capacity ?? 0
   const occupancyPct = capacity ? Math.min(100, Math.round((passengers / capacity) * 100)) : 0
-  const durationMin = stops.length * 10
-  const distanceKm = stops.length * 2
+  const clientItems = useMemo(() => clientsList.data?.items ?? [], [clientsList.data])
+  const distanceMiles = useMemo(() => totalRouteDistanceMiles(stops, clientItems), [stops, clientItems])
+  // Rough estimate — 18 mph average through urban routes + 2 min per stop dwell.
+  const durationMin = Math.round((distanceMiles / 18) * 60 + stops.length * 2)
+  // Out-of-range threshold: 30 miles (~48 km) from the route centroid.
+  const outOfRange = useMemo(() => outOfRangeStopIds(stops, clientItems, 30 / KM_TO_MILES), [stops, clientItems])
+  const outOfRangeStops = stops.filter((s) => outOfRange.includes(s.id))
 
   // Map markers from stop addresses with coordinates.
   const markers: MapMarker[] = useMemo(() => {
@@ -240,6 +271,22 @@ export function RouteBuilderPage() {
         </div>
       )}
 
+      {outOfRangeStops.length > 0 && (
+        <div className="mb-4 flex items-start gap-3 rounded-xl border border-status-warn-bg bg-status-warn-bg p-3" role="alert">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-status-warn" aria-hidden />
+          <div className="text-sm text-status-warn">
+            <p className="font-semibold">
+              {outOfRangeStops.length === 1
+                ? '1 passenger is out of route range'
+                : `${outOfRangeStops.length} passengers are out of route range`}
+            </p>
+            <p>
+              {outOfRangeStops.map((s) => s.clientName).join(', ')} — more than 30 mi from the rest of the route. Re-order or split into another trip.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left — Route Information + Passenger Stops */}
         <div className="space-y-6 lg:col-span-2">
@@ -255,6 +302,28 @@ export function RouteBuilderPage() {
               </FormField>
               <FormField label="Route date" required>
                 {(f) => <Input type="date" {...f} value={date} onChange={(e) => setDate(e.target.value)} disabled={locked} />}
+              </FormField>
+              <FormField label="Session" required hint="Pick AM or PM. Start time fills in automatically.">
+                {() => (
+                  <div className="inline-flex rounded-md border border-border bg-card p-0.5">
+                    {(['AM', 'PM'] as RouteSession[]).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={locked}
+                        onClick={() => setStartTime(s === 'AM' ? '08:00' : '15:00')}
+                        className={cn(
+                          'rounded-[8px] px-5 py-2 text-sm font-semibold transition',
+                          session === s
+                            ? 'bg-brand text-brand-fg shadow-sm'
+                            : 'text-text-muted hover:text-text',
+                        )}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </FormField>
               <FormField label="Route start time" required>
                 {(f) => <Input type="time" {...f} value={startTime} onChange={(e) => setStartTime(e.target.value)} disabled={locked} />}
@@ -280,24 +349,14 @@ export function RouteBuilderPage() {
                 )}
                 {selectedDriver && !hasOverlap && (() => {
                   const avail = driverAvailability(selectedDriver.id)
-                  if (avail === 'available')
-                    return (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-status-active">
-                        <CheckCheck className="h-3.5 w-3.5" aria-hidden />
-                        Available · {session} shift
-                      </p>
-                    )
-                  if (avail === 'on_route')
-                    return (
-                      <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-status-warn">
-                        <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                        On route · finishing current trip
-                      </p>
-                    )
+                  const note = availabilityNote(selectedDriver.id)
+                  const meta = AVAILABILITY_META[avail]
+                  const Icon = meta.icon
                   return (
-                    <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-text-subtle">
-                      <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                      Off duty
+                    <p className={cn('mt-1.5 flex items-center gap-1.5 text-xs font-medium', meta.tone)}>
+                      <Icon className="h-3.5 w-3.5" aria-hidden />
+                      {meta.label}
+                      {note ? ` · ${note}` : avail === 'available' ? ` · ${session} shift` : ''}
                     </p>
                   )
                 })()}
@@ -397,7 +456,7 @@ export function RouteBuilderPage() {
                 <Metric icon={Users} label="Passengers" value={String(passengers)} />
                 <Metric icon={MapPin} label="Stops" value={String(stops.length)} />
                 <Metric icon={Clock} label="Est. Duration" value={String(durationMin)} unit="min" />
-                <Metric icon={Code2} label="Distance" value={String(distanceKm)} unit="km" />
+                <Metric icon={Code2} label="Distance" value={String(distanceMiles)} unit="mi" />
               </div>
 
               <dl className="space-y-3 border-t border-border pt-4 text-sm">
@@ -447,21 +506,13 @@ export function RouteBuilderPage() {
                   }
                   value={(() => {
                     const avail = selectedDriver ? driverAvailability(selectedDriver.id) : 'available'
-                    let tone = 'text-status-active'
-                    let dot = 'bg-status-active'
-                    let label = 'Available'
+                    let tone = AVAILABILITY_META[avail].tone
+                    let dot = AVAILABILITY_META[avail].dot
+                    let label = AVAILABILITY_META[avail].label
                     if (hasOverlap) {
                       tone = 'text-status-expired'
                       dot = 'bg-status-expired'
                       label = 'Conflict'
-                    } else if (avail === 'on_route') {
-                      tone = 'text-status-warn'
-                      dot = 'bg-status-warn'
-                      label = 'On route'
-                    } else if (avail === 'off_duty') {
-                      tone = 'text-text-subtle'
-                      dot = 'bg-text-subtle'
-                      label = 'Off duty'
                     }
                     return (
                       <span className={cn('inline-flex items-center gap-1.5 text-xs font-medium', tone)}>
@@ -489,7 +540,7 @@ export function RouteBuilderPage() {
                       </span>
                     }
                     value={
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
+                      <span className="inline-flex items-center gap-1 rounded-[2px] bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">
                         <Sparkles className="h-3 w-3" aria-hidden />
                         Optimised
                       </span>
@@ -579,47 +630,138 @@ export function RouteBuilderPage() {
         onUpdate={updateStop}
       />
 
-      <Modal open={previewOpen} onOpenChange={setPreviewOpen} title="Preview route" size="lg">
-        <div className="space-y-4">
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Review label="Route name" value={name || '—'} />
-            <Review label="Date" value={formatDate(date)} />
-            <Review label="Start time" value={`${startTime} (${session})`} />
-            <Review label="Driver" value={driverName(driverId)} />
-            <Review label="Vehicle" value={vehicleLabel(vehicleId)} />
-            <Review label="Passengers" value={`${passengers} / ${capacity || '—'}`} />
+      <Modal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        title="Preview route"
+        size="xl"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPreviewOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={() => window.print()}>
+              <Printer className="h-4 w-4" />
+              Print / Export
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          {/* Metadata grid */}
+          <dl className="grid grid-cols-1 gap-y-5 sm:grid-cols-3">
+            <PreviewMeta label="Route name" value={name || '—'} />
+            <PreviewMeta label="Date" value={formatDate(date)} />
+            <PreviewMeta label="Start time" value={`${startTime} (${session})`} />
+            <PreviewMeta label="Driver" value={driverName(driverId)} />
+            <PreviewMeta label="Vehicle" value={vehicleLabel(vehicleId)} />
+            <PreviewMeta label="Passengers" value={`${passengers} / ${capacity || '—'}`} />
           </dl>
-          <div className="rounded-lg border border-border">
-            {stops.length === 0 ? (
-              <p className="px-5 py-4 text-sm text-text-subtle">No stops added.</p>
-            ) : (
-              <ol className="divide-y divide-border">
-                {stops.map((s, i) => (
-                  <li key={s.id} className="flex items-center gap-3 px-5 py-3 text-sm">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-surface-hover text-xs font-medium text-text-muted">
-                      {i + 1}
-                    </span>
-                    <span
-                      className={cn(
-                        'rounded px-1.5 py-0.5 text-xs font-medium',
-                        s.type === 'pickup' ? 'bg-brand-100 text-brand-700' : 'bg-status-active-bg text-status-active',
-                      )}
-                    >
-                      {s.type === 'pickup' ? 'Pickup' : 'Drop-off'}
-                    </span>
-                    <span className="font-medium text-text">{s.plannedTime}</span>
-                    <span className="flex items-center gap-1.5 text-text-muted">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-text-subtle" aria-hidden />
-                      ETA on time
-                    </span>
-                    <span className="text-text-muted">
-                      · {s.clientUci} · {s.clientName}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
+
+          {/* Stops table */}
+          {stops.length === 0 ? (
+            <p className="rounded-lg border border-border px-5 py-4 text-sm text-text-subtle">
+              No stops added.
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-border bg-surface-hover/40 text-xs uppercase tracking-wide text-text-muted">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Stop</th>
+                    <th className="px-4 py-3 font-medium">Type &amp; time</th>
+                    <th className="px-4 py-3 font-medium">Pickup location</th>
+                    <th className="px-4 py-3 font-medium">Drop-off location</th>
+                    <th className="px-4 py-3 font-medium">Passenger</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {stops.map((s, i) => {
+                    const client = clientsList.data?.items.find((c) => c.id === s.clientId)
+                    const addr = client?.addresses.find((a) => a.id === s.addressId)
+                    const isPickup = s.type === 'pickup'
+                    return (
+                      <tr key={s.id} className="align-top">
+                        <td className="px-4 py-4">
+                          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-surface-hover text-xs font-semibold text-text-muted">
+                            {i + 1}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="space-y-1.5">
+                            <span
+                              className={cn(
+                                'inline-flex rounded-[2px] px-2.5 py-0.5 text-xs font-semibold',
+                                isPickup
+                                  ? 'bg-brand-100 text-brand-700'
+                                  : 'bg-status-active-bg text-status-active',
+                              )}
+                            >
+                              {isPickup ? 'Pickup' : 'Drop-off'}
+                            </span>
+                            <p className="text-sm font-semibold text-text">{s.plannedTime}</p>
+                            <p className="flex items-center gap-1.5 text-xs text-text-muted">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-text-subtle" aria-hidden />
+                              ETA on time
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          {isPickup ? (
+                            <div className="flex items-start gap-2">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
+                              <div>
+                                <p className="font-semibold text-text">{client?.name ?? s.clientName}</p>
+                                {addr && (
+                                  <p className="mt-0.5 text-xs leading-snug text-text-muted">
+                                    {addr.line1},<br />
+                                    {addr.city}
+                                    {addr.state ? `, ${addr.state}` : ''}
+                                    {addr.postcode ? ` ${addr.postcode}` : ''}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-text-subtle">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          {!isPickup ? (
+                            <div className="flex items-start gap-2">
+                              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-status-active" aria-hidden />
+                              <div>
+                                <p className="font-semibold text-text">{client?.name ?? s.clientName}</p>
+                                {addr && (
+                                  <p className="mt-0.5 text-xs leading-snug text-text-muted">
+                                    {addr.line1},<br />
+                                    {addr.city}
+                                    {addr.state ? `, ${addr.state}` : ''}
+                                    {addr.postcode ? ` ${addr.postcode}` : ''}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-text-subtle">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex items-start gap-2">
+                            <UserIcon className="mt-0.5 h-4 w-4 shrink-0 text-text-subtle" aria-hidden />
+                            <div>
+                              <p className="font-medium text-text">{s.clientName}</p>
+                              <p className="font-mono text-xs text-text-muted">{s.clientUci}</p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </Modal>
 
@@ -702,7 +844,7 @@ function SectionHeader({
         <h3 className="flex items-center gap-2 text-sm font-semibold text-text">
           {title}
           {count !== undefined && (
-            <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium tabular-nums text-brand-700">
+            <span className="rounded-[2px] bg-brand-100 px-2 py-0.5 text-xs font-medium tabular-nums text-brand-700">
               {count}
             </span>
           )}
@@ -722,11 +864,11 @@ function SummaryRow({ label, value }: { label: React.ReactNode; value: React.Rea
   )
 }
 
-function Review({ label, value }: { label: string; value: string }) {
+function PreviewMeta({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs text-text-subtle">{label}</dt>
-      <dd className="mt-0.5 text-sm font-medium text-text">{value}</dd>
+      <dt className="text-sm font-medium text-text-muted">{label}</dt>
+      <dd className="mt-1 text-base font-semibold text-text">{value}</dd>
     </div>
   )
 }

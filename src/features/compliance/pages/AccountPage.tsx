@@ -46,7 +46,7 @@ export function AccountPage() {
         <CardBody className="flex items-center gap-4">
           <Avatar name={session.name} size="lg" />
           <div>
-            <p className="text-lg font-semibold text-text">{session.name}</p>
+            <p className="text-base font-semibold text-text">{session.name}</p>
             <p className="text-sm text-text-muted">{session.email}</p>
             <div className="mt-1.5">
               <RoleBadge role={session.role} />

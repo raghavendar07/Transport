@@ -3,10 +3,13 @@ import type { RequiredDocument } from '@/lib/api/types'
 
 /** Required document types per entity (USA / FMCSA commercial passenger transport). */
 export const DRIVER_DOCUMENT_TYPES = [
-  "Commercial Driver's License (CDL)",
-  'DOT Medical Examiner Certificate',
-  'Motor Vehicle Record (MVR)',
-  'Defensive Driving Certificate',
+  "Driver's License",
+  'VDDP',
+  'First Aid',
+  'CPR',
+  'Medical Clearance',
+  'CDL Endorsement',
+  'Driver Training',
 ] as const
 
 export const VEHICLE_DOCUMENT_TYPES = [

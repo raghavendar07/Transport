@@ -20,16 +20,16 @@ export function MobileNav({ open, onOpenChange }: { open: boolean; onOpenChange:
         >
           <div className="flex h-16 items-center justify-between border-b border-[#2C313C] px-5">
             <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#3A5BD9] text-[11px] font-bold tracking-tight text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#3A5BD9] text-xs font-bold tracking-tight text-white shadow-[0_1px_2px_rgba(0,0,0,0.4)]">
                 SVS
               </div>
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-sm font-semibold text-white">Smart Vendor Solutions</p>
-                <p className="truncate text-[11px] text-[#7E8492]">Transport Operations</p>
+                <p className="truncate text-[10px] text-[#7E8492]">Transport Operations</p>
               </div>
             </div>
             <Dialog.Close
-              className="rounded-md p-1 text-[#7E8492] hover:bg-[#1F232C] hover:text-[#C7CAD2]"
+              className="rounded-[8px] p-1 text-[#7E8492] hover:bg-[#1F232C] hover:text-[#C7CAD2]"
               aria-label="Close menu"
             >
               <X className="h-5 w-5" aria-hidden />

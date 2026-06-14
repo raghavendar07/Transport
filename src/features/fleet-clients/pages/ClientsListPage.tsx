@@ -5,6 +5,8 @@ import { PageHeader } from '@/components/layout'
 import { Button, DataTable, type Column } from '@/components/ui'
 import { SearchInput, RowActionsMenu } from '@/components/domain'
 import { StatusBadge } from '@/components/domain/StatusBadge'
+import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
+import { formatDate } from '@/lib/format'
 import { useListControls } from '@/lib/useListControls'
 import { useRoutesList } from '@/features/routes-planning/hooks'
 import type { Client, ClientAddress, AddressRole } from '@/lib/api/types'
@@ -44,7 +46,34 @@ export function ClientsListPage() {
   const columns: Column<Client>[] = [
     { key: 'uci', header: 'UCI', cell: (c) => <span className="font-mono font-medium">{c.uci}</span>, sortValue: (c) => c.uci },
     { key: 'name', header: 'Client Name', cell: (c) => <span className="font-medium">{c.name}</span>, sortValue: (c) => c.name },
-    { key: 'phone', header: 'Phone', cell: (c) => <span className="text-text-muted">{c.contactPhone}</span> },
+    { key: 'phone', header: 'Phone', className: 'whitespace-nowrap', cell: (c) => <span className="whitespace-nowrap text-text-muted">{c.contactPhone}</span> },
+    {
+      key: 'authNumber',
+      header: 'Authorization #',
+      className: 'whitespace-nowrap',
+      cell: (c) =>
+        c.authorizationNumber ? (
+          <span className="whitespace-nowrap font-mono text-xs text-text">{c.authorizationNumber}</span>
+        ) : (
+          <span className="text-text-subtle">—</span>
+        ),
+      sortValue: (c) => c.authorizationNumber ?? '',
+    },
+    {
+      key: 'authExpiry',
+      header: 'Auth Expiry',
+      className: 'whitespace-nowrap',
+      cell: (c) =>
+        c.authorizationExpiry ? (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <ExpiryBadge date={c.authorizationExpiry} />
+            <span className="text-xs text-text-subtle tabular-nums">{formatDate(c.authorizationExpiry)}</span>
+          </div>
+        ) : (
+          <span className="text-text-subtle">—</span>
+        ),
+      sortValue: (c) => c.authorizationExpiry ?? '',
+    },
     { key: 'pickup', header: 'Pickup Address', cell: (c) => addressLine(addr(c, 'pickup')) },
     { key: 'dropoff', header: 'Drop-off Address', cell: (c) => addressLine(addr(c, 'dropoff')) },
     {

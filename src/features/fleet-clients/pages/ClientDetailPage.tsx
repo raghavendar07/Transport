@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Pencil, MapPin, Crosshair } from 'lucide-react'
+import { Pencil, MapPin, Crosshair, ShieldCheck, FileSignature, Calendar, CalendarX } from 'lucide-react'
 import { PageHeader } from '@/components/layout'
 import {
   Button,
@@ -15,7 +15,9 @@ import {
   useToast,
 } from '@/components/ui'
 import { MapView, type MapMarker } from '@/components/domain'
-import type { ClientAddress } from '@/lib/api/types'
+import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
+import { expiryStatus, formatDate } from '@/lib/format'
+import type { Client, ClientAddress } from '@/lib/api/types'
 import { clientsApi } from '../hooks'
 
 export function ClientDetailPage() {
@@ -68,6 +70,7 @@ export function ClientDetailPage() {
                 </Button>
               }
             />
+            <AuthorizationCard client={client} />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -138,4 +141,71 @@ export function ClientDetailPage() {
       }}
     </AsyncBoundary>
   )
+}
+
+function AuthorizationCard({ client }: { client: Client }) {
+  const status = client.authorizationExpiry ? expiryStatus(client.authorizationExpiry) : null
+  const expired = status === 'expired'
+  return (
+    <Card
+      className={cnEdge(
+        'mb-6 border-l-4',
+        expired ? 'border-l-status-expired' : status === 'expiring' ? 'border-l-status-warn' : 'border-l-status-active',
+      )}
+    >
+      <CardHeader className="flex items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-brand" aria-hidden />
+          Authorization
+        </CardTitle>
+        {client.authorizationExpiry && <ExpiryBadge date={client.authorizationExpiry} />}
+      </CardHeader>
+      <CardBody>
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <AuthField
+            icon={FileSignature}
+            label="Authorization Number"
+            value={client.authorizationNumber ? <span className="font-mono">{client.authorizationNumber}</span> : '—'}
+          />
+          <AuthField
+            icon={Calendar}
+            label="Start Date"
+            value={client.authorizationStartDate ? formatDate(client.authorizationStartDate) : '—'}
+          />
+          <AuthField
+            icon={CalendarX}
+            label="Expiration Date"
+            value={client.authorizationExpiry ? formatDate(client.authorizationExpiry) : '—'}
+            valueClass={expired ? 'text-status-expired font-semibold' : status === 'expiring' ? 'text-status-warn font-semibold' : undefined}
+          />
+        </dl>
+      </CardBody>
+    </Card>
+  )
+}
+
+function AuthField({
+  icon: Icon,
+  label,
+  value,
+  valueClass,
+}: {
+  icon: typeof ShieldCheck
+  label: string
+  value: React.ReactNode
+  valueClass?: string
+}) {
+  return (
+    <div>
+      <dt className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+        <Icon className="h-3.5 w-3.5 text-text-subtle" aria-hidden />
+        {label}
+      </dt>
+      <dd className={cnEdge('mt-1 text-sm text-text', valueClass)}>{value}</dd>
+    </div>
+  )
+}
+
+function cnEdge(...c: (string | undefined | false)[]) {
+  return c.filter(Boolean).join(' ')
 }

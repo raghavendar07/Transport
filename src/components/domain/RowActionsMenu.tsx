@@ -45,7 +45,7 @@ export function RowActionsMenu({
             type="button"
             aria-label={`Actions for ${itemLabel}`}
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-subtle hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] text-text-subtle hover:bg-surface-hover hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <MoreVertical className="h-4 w-4" aria-hidden />
           </button>

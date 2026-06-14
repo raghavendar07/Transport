@@ -10,29 +10,33 @@ interface ModalProps {
   description?: string
   children: ReactNode
   footer?: ReactNode
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
 }
 
 const SIZE: Record<NonNullable<ModalProps['size']>, string> = {
-  sm: 'max-w-md',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
+  sm: 'w-full sm:max-w-md',
+  md: 'w-full sm:max-w-lg',
+  lg: 'w-full sm:max-w-2xl',
+  xl: 'w-full sm:max-w-4xl',
 }
 
-/** Accessible dialog: focus trap, Esc to close, labelled title/description. */
+/**
+ * Side-drawer dialog — slides in from the right.
+ * Accessible: focus trap, Esc to close, labelled title/description.
+ */
 export function Modal({ open, onOpenChange, title, description, children, footer, size = 'md' }: ModalProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in" />
+        <Dialog.Overlay className="drawer-overlay fixed inset-0 z-40 bg-black/40" />
         <Dialog.Content
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-card shadow-pop focus:outline-none',
+            'drawer-content fixed right-0 top-0 z-50 flex h-full flex-col border-l border-border bg-card shadow-pop focus:outline-none',
             SIZE[size],
           )}
         >
-          <div className="flex items-start justify-between border-b border-border px-5 py-4">
-            <div>
+          <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+            <div className="min-w-0">
               <Dialog.Title className="text-base font-semibold text-text">{title}</Dialog.Title>
               {description && (
                 <Dialog.Description className="mt-1 text-sm text-text-muted">
@@ -41,15 +45,15 @@ export function Modal({ open, onOpenChange, title, description, children, footer
               )}
             </div>
             <Dialog.Close
-              className="rounded-md p-1 text-text-subtle hover:bg-surface-hover hover:text-text"
-              aria-label="Close dialog"
+              className="rounded-[8px] p-1 text-text-subtle hover:bg-surface-hover hover:text-text"
+              aria-label="Close drawer"
             >
               <X className="h-5 w-5" aria-hidden />
             </Dialog.Close>
           </div>
-          <div className="px-5 py-4">{children}</div>
+          <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
           {footer && (
-            <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-4">
+            <div className="flex items-center justify-end gap-2 border-t border-border bg-card px-5 py-4">
               {footer}
             </div>
           )}

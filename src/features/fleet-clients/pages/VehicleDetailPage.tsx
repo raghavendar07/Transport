@@ -6,6 +6,8 @@ import { ExpiryBadge } from '@/components/domain/ExpiryBadge'
 import { StatusBadge } from '@/components/domain/StatusBadge'
 import { formatDate } from '@/lib/format'
 import { DocumentsSummary, DocumentExpiryAlert } from '../components/DocumentsSummary'
+import { MaintenanceLogsSection } from '../components/MaintenanceLogsSection'
+import { VehicleAttachmentsSection } from '../components/VehicleAttachmentsSection'
 import { vehiclesApi } from '../hooks'
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -58,7 +60,7 @@ export function VehicleDetailPage() {
                   <Field label="Year" value={v.year} />
                   <Field label="Capacity" value={`${v.capacity} seats`} />
                   <Field label="Fuel type" value={<span className="capitalize">{v.fuelType}</span>} />
-                  <Field label="Odometer" value={`${v.odometer.toLocaleString()} km`} />
+                  <Field label="Odometer" value={`${v.odometer.toLocaleString()} mi`} />
                 </dl>
               </CardBody>
             </Card>
@@ -97,6 +99,8 @@ export function VehicleDetailPage() {
                 <DocumentsSummary documents={v.documents} />
               </CardBody>
             </Card>
+            <MaintenanceLogsSection vehicle={v} />
+            <VehicleAttachmentsSection vehicle={v} />
           </div>
         </div>
       )}

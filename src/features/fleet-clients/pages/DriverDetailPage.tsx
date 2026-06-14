@@ -61,7 +61,7 @@ export function DriverDetailPage() {
             <Card className="lg:col-span-1">
               <CardBody className="flex flex-col items-center text-center">
                 <Avatar name={driver.name} src={driver.photoUrl} size="lg" />
-                <h2 className="mt-3 text-lg font-semibold text-text">{driver.name}</h2>
+                <h2 className="mt-3 text-base font-semibold text-text">{driver.name}</h2>
                 <div className="mt-2 flex flex-wrap justify-center gap-2">
                   <StatusBadge status={driver.status} />
                   <ExpiryBadge date={driver.licenceExpiry} />

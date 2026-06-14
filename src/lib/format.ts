@@ -26,13 +26,15 @@ export function expiryStatus(date: string | Date | null | undefined, now: Date =
   return 'active'
 }
 
-const DATE_FMT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-const DATETIME_FMT = new Intl.DateTimeFormat('en-GB', {
+/** US format: month/day/year (mm/dd/yyyy) — applied platform-wide. */
+const DATE_FMT = new Intl.DateTimeFormat('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+const DATETIME_FMT = new Intl.DateTimeFormat('en-US', {
+  month: '2-digit',
   day: '2-digit',
-  month: 'short',
   year: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
+  hour12: false,
 })
 
 export function formatDate(date: string | Date | null | undefined): string {

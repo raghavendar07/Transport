@@ -48,7 +48,7 @@ export function RoutesOverviewPage() {
     <div>
       <PageHeader
         title="Route Planning"
-        description="Plan, publish and track delivery routes."
+        description="Plan, publish and track passenger transport routes."
         actions={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setCopyOpen(true)}>
@@ -80,7 +80,7 @@ export function RoutesOverviewPage() {
             {t.label}
             <span
               className={cn(
-                'rounded-full px-2 py-0.5 text-xs tabular-nums',
+                'rounded-[2px] px-2 py-0.5 text-xs tabular-nums',
                 tab === t.key ? 'bg-brand text-brand-fg' : 'bg-surface-hover text-text-muted',
               )}
             >
@@ -116,11 +116,11 @@ export function RoutesOverviewPage() {
         }
       >
         {(list) => (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
             {list.map((r) => (
               <Card
                 key={r.id}
-                className="cursor-pointer transition-shadow hover:shadow-pop"
+                className="cursor-pointer transition-all hover:border-border-strong hover:-translate-y-px"
                 onClick={() => navigate(`/routes/${r.id}`)}
               >
                 <CardBody>

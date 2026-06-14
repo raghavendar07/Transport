@@ -96,6 +96,7 @@ export interface Api {
       args: { type: ReportType; dateFrom: string; dateTo: string; filters: Record<string, string> },
     ): Promise<GeneratedReport>
     list(tenantId: string): Promise<GeneratedReport[]>
+    archive(tenantId: string, ids: string[], archived: boolean): Promise<void>
   }
 }
 
@@ -151,7 +152,7 @@ const realApi: Api = {
   documents: realCrud<ComplianceDocument>(),
   audit: { list: notImpl, get: notImpl, exportCsv: notImpl },
   notifications: { list: notImpl, markRead: notImpl, markAllRead: notImpl, getPrefs: notImpl, updatePrefs: notImpl },
-  reports: { generate: notImpl, list: notImpl },
+  reports: { generate: notImpl, list: notImpl, archive: notImpl },
 }
 
 const MODE = import.meta.env.VITE_API_MODE ?? 'mock'

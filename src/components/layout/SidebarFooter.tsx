@@ -33,7 +33,7 @@ export function SidebarFooter() {
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-[#E7E9EE]">{session.name}</p>
-          <p className="truncate text-[11px] text-[#7E8492]">{ROLE_FOOTER_LABEL[session.role]}</p>
+          <p className="truncate text-[10px] text-[#7E8492]">{ROLE_FOOTER_LABEL[session.role]}</p>
         </div>
       </div>
     </div>

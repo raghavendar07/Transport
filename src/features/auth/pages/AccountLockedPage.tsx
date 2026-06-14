@@ -26,7 +26,7 @@ export function AccountLockedPage() {
           Too many failed sign-in attempts. For your security, this account is locked for 15 minutes.
         </p>
         {!unlocked ? (
-          <p className="mt-4 font-mono text-2xl font-semibold text-text" aria-live="polite">
+          <p className="mt-4 font-mono text-2xl font-bold text-text" aria-live="polite">
             {mm}:{ss}
           </p>
         ) : (
