@@ -138,7 +138,9 @@ export function UserFormPage() {
 
   async function onSubmit(values: UserValues) {
     // Primary role = first selected — admin wins when both are picked.
-    const primary: Role = values.roles.includes('admin' as Role) ? 'admin' : values.roles[0]
+    // `values.roles` is narrowed to 'admin' | 'dispatcher' by the schema; cast up to Role
+    // so the API contract (which permits 'driver' too) is satisfied.
+    const primary: Role = values.roles.includes('admin') ? 'admin' : values.roles[0]
     const payload = { ...values, role: primary }
     if (isEdit) {
       await update.mutateAsync({ id: id!, data: payload })

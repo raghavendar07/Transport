@@ -186,7 +186,7 @@ export function DriversListPage() {
                     onSelect={(e) => e.preventDefault()}
                     className="flex cursor-pointer items-center gap-2 rounded-[6px] px-3 py-2 text-sm text-text outline-none data-[highlighted]:bg-surface-hover"
                   >
-                    <Checkbox checked={checked} aria-hidden tabIndex={-1} />
+                    <Checkbox checked={checked} aria-hidden />
                     <span className="flex-1">{c.label}</span>
                     {checked && <Check className="h-3.5 w-3.5 text-brand" aria-hidden />}
                   </DropdownMenu.CheckboxItem>
